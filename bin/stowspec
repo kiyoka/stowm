@@ -161,7 +161,7 @@ true; exec /usr/local/bin/nendo $0 $*
               (if (memv x projs ) 'p false))))
      all)))
 
-(when true
+(when false
   (get-stowed-list
    '(
      (pwd . "/Volumes/CaseSensitive/kiyoka/work/github/nendo/sample")
