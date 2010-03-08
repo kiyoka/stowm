@@ -22,7 +22,7 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 (define (exec-sh script)
-  (let1 tmpfile "/tmp/go.sh"
+  (let1 tmpfile "/tmp/stowspec_script.sh"
     (with-open
      tmpfile
      (lambda (f)
@@ -111,7 +111,7 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 (define (get-dir-entries path)
-  (filter-map
+  (filter
    (lambda (x)
      (not (or (x.match "[/]?[.]$")
               (x.match "[/]?[.][.]$")
@@ -120,46 +120,57 @@ true; exec /usr/local/bin/nendo $0 $*
 
 ;;(get-dir-entries "/usr/local/stow")
 
+
+(define (get-linklist envs)
+  (let* ((bin-path (assq-ref 'bin envs))
+         (bin-list
+          (map
+           (lambda (x)
+             (+ bin-path "/" x))
+           (get-dir-entries bin-path))))
+    (filter-map
+     (lambda (x)
+       (when (File.symlink? x)
+         (File.readlink x)))
+     bin-list)))
+  
+
 ;; check installed binary file by stow.
-(define (binary-installed? envs projname)
+(define (binary-installed? envs linklist projname)
   (if (not projname)
       false
-      (let* ((bin-path (assq-ref 'bin envs))
-             (bin-list
-              (map
-               (lambda (x)
-                 (+ bin-path "/" x))
-               (get-dir-entries bin-path))))
-        (let1 linklist
+      ;; checking installed file counts.
+      (< 0 (length
             (filter
              (lambda (x)
-               (when (File.symlink? x)
-                 (File.readlink x)))
-             bin-list)
-          ;; checking installed file counts.
-          (< 0 (length
-                (filter-map
-                 (lambda (x)
-                   (regex-match projname x))
-                 linklist)))))))
+               (regex-match projname x))
+             linklist)))))
 
 
 (define (get-stowed-list envs)
-  (let* ((projs  (get-dir-entries (assq-ref 'stow-home envs)))
-         (stowed (get-dir-entries (assq-ref 'target envs)))
-         (all    (uniq (sort (append projs stowed)))))
+  (let* ((projs    (get-dir-entries (assq-ref 'stow-home envs)))
+         (stowed   (get-dir-entries (assq-ref 'target envs)))
+         (all      (uniq (sort (append projs stowed))))
+         (linklist (get-linklist envs)))
     (map
      (lambda (x)
        (cons x
              (list
-              (if (binary-installed? envs x) 'i false)
+              (if #?=(binary-installed? envs linklist x) 'i false)
               (if (memv x stowed) 's false)
               (if (memv x projs ) 'p false))))
      all)))
 
-(when false
+(when true
   (get-stowed-list
-   '((pwd . "/Volumes/CaseSensitive/kiyoka/work/github/nendo/sample") (home . "/Users/kiyoka") (stow_home . "/Users/kiyoka/stowspec") (target . "/usr/local/stow") (bin . "/usr/local/bin") (temp . "/tmp/stowspec") (project))))
+   '(
+     (pwd . "/Volumes/CaseSensitive/kiyoka/work/github/nendo/sample")
+     (home . "/Users/kiyoka")
+     (stow_home . "/Users/kiyoka/stowspec")
+     (target . "/usr/local/stow")
+     (bin . "/usr/local/bin")
+     (temp . "/tmp/stowspec")
+     (project))))
 
 
 (define (action-by-place envs)
