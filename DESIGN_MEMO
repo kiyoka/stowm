@@ -1,0 +1,37 @@
+------------------------------ list-style(old) ------------------------------
+
+        <name>            <installed>   <stowed>   <source>
+ Gauche-0.8.14                     -          O          O
+ Gauche-0.9                        O          O          O
+ bash-4.0                          -          O          O
+ bash-4.1                          O          O          O
+ mosh-0.2.0                        -          -          O
+ ruby-1.8.7-p174                   -          O          O
+ ruby-1.9.1-p376                   -          O          O
+ ruby-1.9.2-preview1               O          O          O
+ simstring-1.0                     -          -          O
+ subversion-16                     -          -          O
+ tinyscheme1.39                    -          -          O
+ tokyocabinet-1.4.42               O          O          O
+ wget-1.11.4                       O          O          O
+
+------------------------------ tree-style(new) ------------------------------
+
+
+        <name>            <installed>   <stowed>   <source>
+ Gauche
+   1. Gauche-0.8.14               -          O          O
+   2. Gauche-0.9                  O          O          O
+ bash
+   3. bash-4.0                    -          O          O
+   4. bash-4.1                    O          O          O
+ mosh
+   5. mosh-0.2.0                  -          -          O
+ ruby
+   6. ruby-1.8.7-p174             -          O          O
+   7. ruby-1.9.1-p376             -          O          O
+   8. ruby-1.9.2-preview1         O          O          O
+
+> ss 7
+  => stow -D 8(ruby-1.9.2-preview1) && stow -R 7(ruby-1.9.1-p376)
+
