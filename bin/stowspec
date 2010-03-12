@@ -24,8 +24,11 @@ true; exec /usr/local/bin/nendo $0 $*
 ;;(regex-match "^([a-z]+)([0-9]+)$" "abc123")
 
 
+(require "digest/md5")
+
 (define (exec-sh script)
-  (let1 tmpfile "/tmp/stowspec_script.sh"
+  (let* ((digest (Digest::MD5.hexdigest script))
+         (tmpfile (sprintf "/tmp/stowspec_script.%s.sh" digest)))
     (with-open
      tmpfile
      (lambda (f)
@@ -35,7 +38,6 @@ true; exec /usr/local/bin/nendo $0 $*
     (display script)
     (.system (+ "bash " tmpfile))
     (print "---END---")))
-
 
 
 (define (tgz-to-name tgz)
@@ -155,10 +157,6 @@ true; exec /usr/local/bin/nendo $0 $*
                     (sprintf "cd %s" workdir)
                     (sprintf "tar zxf %s" arc)
                     (sprintf "cd ./%s"    projname)
-                    (sprintf "if [ ! -e ./configure ] ; then")
-                    (sprintf "  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'")
-                    (sprintf "  exit 1")
-                    (sprintf "fi")
                     (assq-ref 'conf       spec)
                     (assq-ref 'make       spec)
                     (assq-ref 'install    spec)
@@ -415,7 +413,16 @@ true; exec /usr/local/bin/nendo $0 $*
                            (for-each
                             (lambda (x)
                               (f.puts (+ " " (write-to-string x))))
-                            `((conf      . ,(sprintf "./configure --prefix=%s/%s " (assq-ref 'target envs) projname))
+                            `((conf      .
+                                         ,(string-join
+                                           (list
+                                            "if [ ! -e ./configure ] ; then"
+                                            "  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'"
+                                            "  exit 1"
+                                            "fi"
+                                            (sprintf "./configure --prefix=%s/%s " (assq-ref 'target envs) projname)
+                                            "")
+                                           "\n"))
                               (make      . "make")
                               (install   . "make install")
                               (arc       . ,arc)
