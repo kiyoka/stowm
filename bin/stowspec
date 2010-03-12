@@ -286,6 +286,11 @@ true; exec /usr/local/bin/nendo $0 $*
 ;;(stowed-list-to-tree '(("Gauche-0.8.14" false s p "Gauche" 0) ("Gauche-0.9" i s p "Gauche" 1) ("bash-4.0" false s p "bash" 2) ("bash-4.1" i s p "bash" 3) ("mosh-0.2.0" false false p "mosh" 4) ("ruby-1.8.7-p174" false s p "ruby" 5) ("ruby-1.9.1-p376" false s p "ruby" 6) ("ruby-1.9.2-preview1" i s p "ruby" 7) ("simstring-1.0" false false p "simstring" 8) ("subversion-16" false false p "subversion" 9) ("tinyscheme1.39" false false p "tinyscheme" 10) ("tokyocabinet-1.4.42" i s p "tokyocabinet" 11) ("wget-1.11.4" i s p "wget" 12)))
 
 
+
+(define stowspec nil)
+(define (define-stowspec alist)
+  (set! stowspec alist))
+  
 (define (action-by-curdir envs)
   (let1 curdir-info (get-curdir-info envs)
     (cond
@@ -297,18 +302,19 @@ true; exec /usr/local/bin/nendo $0 $*
           (begin
             (print "Error: ./specfile does not exist...")
             (exit 1))
-          (let* ((spec (with-open "./specfile"
-                                  (lambda (f)
-                                    (read f))))
-                 (project-envs (get-project-envs envs
-                                                 (assq-ref 'projname spec)
-                                                 (assq-ref 'arc      spec)
-                                                 (assq-ref 'url      spec))))
-            (exec-sh
-             (assq-ref 'build (gen-script
-                               envs
-                               project-envs
-                               spec))))))
+          (begin
+            (load "./specfile")
+            #?=stowspec
+            (let* ((spec stowspec)
+                   (project-envs (get-project-envs envs
+                                                   (assq-ref 'projname spec)
+                                                   (assq-ref 'arc      spec)
+                                                   (assq-ref 'url      spec))))
+              (exec-sh
+               (assq-ref 'build (gen-script
+                                 envs
+                                 project-envs
+                                 spec)))))))
      (else
       ;; ----------
       ;; show current stowed status
@@ -409,7 +415,7 @@ true; exec /usr/local/bin/nendo $0 $*
               (with-open specfile
                          (lambda (f)
                            (f.puts ";;-*- mode: scheme; syntax: scheme -*-;;")
-                           (f.puts "(")
+                           (f.puts "(define-stowspec '(")
                            (for-each
                             (lambda (x)
                               (f.puts (+ " " (write-to-string x))))
@@ -428,7 +434,7 @@ true; exec /usr/local/bin/nendo $0 $*
                               (arc       . ,arc)
                               (url       . ,url)
                               (projname  . ,projname)))
-                           (f.puts ")"))
+                           (f.puts "))"))
                          "w")
               (exec-sh (assq-ref 'stowspec scripts))))
           (begin
@@ -438,6 +444,7 @@ true; exec /usr/local/bin/nendo $0 $*
 ;; test
 ;;(action-by-arg '("a.tar.gz"))
 ;;(action-by-arg '("http://www.example.com/a.tar.gz"))
+
 
 (define (main argv)
   (let1 envs (get-envs)
