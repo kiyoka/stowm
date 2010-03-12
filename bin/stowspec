@@ -304,7 +304,6 @@ true; exec /usr/local/bin/nendo $0 $*
             (exit 1))
           (begin
             (load "./specfile")
-            #?=stowspec
             (let* ((spec stowspec)
                    (project-envs (get-project-envs envs
                                                    (assq-ref 'projname spec)
