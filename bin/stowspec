@@ -62,7 +62,7 @@ true; exec /usr/local/bin/nendo $0 $*
 
 (define (get-project-basename name-and-ver)
   (cond
-   ((regex-match (+ "^([A-Za-z0-9]+)[-].+$") name-and-ver)
+   ((regex-match (+ "^([A-Za-z0-9-]+)[-][0-9]+") name-and-ver)
     => second)
    (else
     "???")))
@@ -76,6 +76,7 @@ true; exec /usr/local/bin/nendo $0 $*
    (get-project-basename "file.txt")
    (get-project-basename "wget-1.9.tar.gz")
    (get-project-basename "w3m-0.5.2")
+   (get-project-basename "emacs-w3m-20081218-CVS")
    (get-project-basename 
     (tgz-to-name "http://ftp.gnu.org/gnu/wget/wget-1.9.tar.gz"))
    ))
