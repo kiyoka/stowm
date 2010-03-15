@@ -287,10 +287,6 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 
-(define stowspec nil)
-(define (define-stowspec alist)
-  (set! stowspec alist))
-  
 (define (action-by-curdir envs)
   (let1 curdir-info (get-curdir-info envs)
     (cond
@@ -304,6 +300,9 @@ true; exec /usr/local/bin/nendo $0 $*
             (exit 1))
           (begin
             (load "./specfile")
+            (when (not stowspec)
+              (STDERR.printf "Error: spec was not defined... please use (define-stowspec '(...)) form\n")
+              (exit 1))
             (let* ((spec stowspec)
                    (project-envs (get-project-envs envs
                                                    (assq-ref 'projname spec)
@@ -456,5 +455,17 @@ true; exec /usr/local/bin/nendo $0 $*
          (action-by-number envs (to-i (car argv))))
         (else
          (action-by-arg    envs argv)))))))
+
+
+
+;; ----------------------------------------
+;; utility for user's "specfile" file.
+;; ----------------------------------------
+(define stowspec nil)
+(define (define-stowspec alist)
+  (set! stowspec alist))
+(define uname 
+  (let1 f (IO.popen "uname" "r+")
+    f.readline.chop))
 
 (main (cdr ARGV.to_list))
