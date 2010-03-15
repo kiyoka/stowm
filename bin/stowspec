@@ -6,7 +6,8 @@ true; exec /usr/local/bin/nendo $0 $*
 (define pp pretty-print)
 
 (define archive-file-pattern "([a-zA-Z].*)")
-(define stow-home   (File.expand_path "~/stowspec"))
+(define initfile-path   (File.expand_path "~/.stowspec"))
+(define stow-home       (File.expand_path "~/stowspec"))
 (define stow-target "/usr/local/stow")
 (define stow-bin    "/usr/local/bin")
 (define stow-temp   "/tmp/stowspec")
@@ -204,7 +205,7 @@ true; exec /usr/local/bin/nendo $0 $*
       (< 0 (length
             (filter
              (lambda (x)
-               (regex-match projname x))
+               (regex-match (+ "[/]" projname "[/]") x))
              linklist)))))
 
 (define (get-stowed-list envs)
@@ -445,6 +446,8 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 (define (main argv)
+  (if (File.exist? initfile-path)
+      (load initfile-path))
   (let1 envs (get-envs)
     (case (length argv)
       ((0)
