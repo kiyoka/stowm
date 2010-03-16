@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(
+ (conf . "./configure --prefix=/usr/local/stow/ruby-1.9.1-p376 ")
+ (make . "make")
+ (install . "make install")
+ (arc . "ruby-1.9.1-p376.tar.gz")
+ (url)
+ (projname . "ruby-1.9.1-p376")
+)

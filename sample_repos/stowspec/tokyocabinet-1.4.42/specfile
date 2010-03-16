@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(
+ (conf . "./configure --prefix=/usr/local/stow/tokyocabinet-1.4.42 ")
+ (make . "make")
+ (install . "make install")
+ (arc . "tokyocabinet-1.4.42.tar.gz")
+ (url . "http://1978th.net/tokyocabinet/tokyocabinet-1.4.42.tar.gz")
+ (projname . "tokyocabinet-1.4.42")
+)

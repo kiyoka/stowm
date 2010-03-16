@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/bash-4.1 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "bash-4.1.tar.gz")
+ (url . "http://core.ring.gr.jp/pub/GNU/bash/bash-4.1.tar.gz")
+ (projname . "bash-4.1")
+))

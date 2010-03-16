@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(
+ (conf . "./configure --prefix=/usr/local/stow/ruby-1.8.7-p174 ")
+ (make . "make")
+ (install . "make install")
+ (arc . "ruby-1.8.7-p174.tar.gz")
+ (url . "http://ring.u-toyama.ac.jp/archives/lang/ruby/1.8/ruby-1.8.7-p174.tar.gz")
+ (projname . "ruby-1.8.7-p174")
+)
