@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/mew-6.3 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "mew-6.3.tar.gz")
+ (url . "http://www.mew.org/Release/mew-6.3.tar.gz")
+ (projname . "mew-6.3")
+))

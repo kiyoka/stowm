@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(
+ (conf . "./configure --prefix=/usr/local/stow/emacs-23.1 ")
+ (make . "make")
+ (install . "make install")
+ (arc . "emacs-23.1.tar.gz")
+ (url . "http://core.ring.gr.jp/pub/GNU/emacs/emacs-23.1.tar.gz")
+ (projname . "emacs-23.1")
+)
