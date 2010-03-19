@@ -41,7 +41,7 @@ true; exec /usr/local/bin/nendo $0 $*
     (display script)
     (.system (+ "bash " tmpfile))
     (print "---END---")
-    (.delete tmpfile)))
+    (File.delete tmpfile)))
 
 
 (define (tgz-to-name tgz)
