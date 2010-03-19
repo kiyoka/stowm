@@ -1,9 +1,14 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(
- (conf . "./configure --prefix=/usr/local/stow/tokyocabinet-1.4.42 ")
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/tokyocabinet-1.4.42 
+")
  (make . "make")
  (install . "make install")
  (arc . "tokyocabinet-1.4.42.tar.gz")
- (url . "http://1978th.net/tokyocabinet/tokyocabinet-1.4.42.tar.gz")
+ (url)
  (projname . "tokyocabinet-1.4.42")
-)
+))
