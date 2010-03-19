@@ -2,6 +2,7 @@
 true; #-*- mode: nendo; syntax: scheme -*-;;
 true; exec /usr/local/bin/nendo $0 $*
 
+
 (define debug-print-length 1024)
 (define pp pretty-print)
 
@@ -10,6 +11,7 @@ true; exec /usr/local/bin/nendo $0 $*
 (define stow-home       (File.expand_path "~/stowspec"))
 (define stow-target "/usr/local/stow")
 (define stow-bin    "/usr/local/bin")
+(define stow-lib    "/usr/local/lib")
 (define stow-temp   "/tmp/stowspec")
 
 ;; `regex' is a string ( not a regex object )
@@ -95,6 +97,7 @@ true; exec /usr/local/bin/nendo $0 $*
       (stow-home   . ,stow-home)            ;; "/home/xxxx/stowspec"
       (target      . ,stow-target)          ;; "/usr/local/stow"
       (bin         . ,stow-bin)             ;; "/usr/local/bin"
+      (lib         . ,stow-lib)             ;; "/usr/local/lib"
       (temp        . ,stow-temp)            ;; "/tmp/stowspec"
       (project     . ,in-project)           ;; nil or "aaaa-1.2.3.tar.gz"
       )))
@@ -185,11 +188,13 @@ true; exec /usr/local/bin/nendo $0 $*
 
 (define (get-linklist envs)
   (let* ((bin-path (assq-ref 'bin envs))
+         (lib-path (assq-ref 'lib envs))
          (bin-list
-          (map
-           (lambda (x)
-             (+ bin-path "/" x))
-           (get-dir-entries bin-path))))
+          (append
+           (map  (lambda (x) (+ bin-path "/" x))
+                 (get-dir-entries bin-path))
+           (map  (lambda (x) (+ lib-path "/" x))
+                 (get-dir-entries lib-path)))))
     (filter-map
      (lambda (x)
        (when (File.symlink? x)
@@ -385,16 +390,16 @@ true; exec /usr/local/bin/nendo $0 $*
               (printf "Error: selected number [%d] was not installed yet. \n" number)
               (exit 1))
              ((equal? delete-item restow-item)
-              (printf "Info: force restow [%s] again? [y/n]\n" (car restow-item))
+              (printf "Info: force restow [%s] again? [Y/n]\n" (car restow-item))
               (let* ((ch STDIN.getc)
                      (_do
                       (if (nil? ch)
                           #f
-                          (ch.chr.match "[Yy]"))))
+                          (not (ch.chr.match "[nN]")))))
                 (if _do
                     (do-restow (assq-ref 'target envs) delete-item restow-item)
                     (begin
-                      (printf "Info: `restow' was canceled. \n" (car restow-item))
+                      (printf "Info: `restow -R' was canceled. \n" (car restow-item))
                       (exit 0)))))
              (else
               (do-restow (assq-ref 'target envs) delete-item restow-item))))))))
