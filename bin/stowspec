@@ -2,13 +2,16 @@
 true; #-*- mode: nendo; syntax: scheme -*-;;
 true; exec /usr/local/bin/nendo $0 $*
 
+
 (define debug-print-length 1024)
 (define pp pretty-print)
 
 (define archive-file-pattern "([a-zA-Z].*)")
-(define stow-home   (File.expand_path "~/stowspec"))
+(define initfile-path   (File.expand_path "~/.stowspec"))
+(define stow-home       (File.expand_path "~/stowspec"))
 (define stow-target "/usr/local/stow")
 (define stow-bin    "/usr/local/bin")
+(define stow-lib    "/usr/local/lib")
 (define stow-temp   "/tmp/stowspec")
 
 ;; `regex' is a string ( not a regex object )
@@ -37,7 +40,8 @@ true; exec /usr/local/bin/nendo $0 $*
     (print "---BEGIN---")
     (display script)
     (.system (+ "bash " tmpfile))
-    (print "---END---")))
+    (print "---END---")
+    (.delete tmpfile)))
 
 
 (define (tgz-to-name tgz)
@@ -95,6 +99,7 @@ true; exec /usr/local/bin/nendo $0 $*
       (stow-home   . ,stow-home)            ;; "/home/xxxx/stowspec"
       (target      . ,stow-target)          ;; "/usr/local/stow"
       (bin         . ,stow-bin)             ;; "/usr/local/bin"
+      (lib         . ,stow-lib)             ;; "/usr/local/lib"
       (temp        . ,stow-temp)            ;; "/tmp/stowspec"
       (project     . ,in-project)           ;; nil or "aaaa-1.2.3.tar.gz"
       )))
@@ -185,11 +190,13 @@ true; exec /usr/local/bin/nendo $0 $*
 
 (define (get-linklist envs)
   (let* ((bin-path (assq-ref 'bin envs))
+         (lib-path (assq-ref 'lib envs))
          (bin-list
-          (map
-           (lambda (x)
-             (+ bin-path "/" x))
-           (get-dir-entries bin-path))))
+          (append
+           (map  (lambda (x) (+ bin-path "/" x))
+                 (get-dir-entries bin-path))
+           (map  (lambda (x) (+ lib-path "/" x))
+                 (get-dir-entries lib-path)))))
     (filter-map
      (lambda (x)
        (when (File.symlink? x)
@@ -205,7 +212,7 @@ true; exec /usr/local/bin/nendo $0 $*
       (< 0 (length
             (filter
              (lambda (x)
-               (regex-match projname x))
+               (regex-match (+ "[/]" projname "[/]") x))
              linklist)))))
 
 (define (get-stowed-list envs)
@@ -288,10 +295,6 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 
-(define stowspec nil)
-(define (define-stowspec alist)
-  (set! stowspec alist))
-  
 (define (action-by-curdir envs)
   (let1 curdir-info (get-curdir-info envs)
     (cond
@@ -305,6 +308,9 @@ true; exec /usr/local/bin/nendo $0 $*
             (exit 1))
           (begin
             (load "./specfile")
+            (when (not stowspec)
+              (STDERR.printf "Error: spec was not defined... please use (define-stowspec '(...)) form\n")
+              (exit 1))
             (let* ((spec stowspec)
                    (project-envs (get-project-envs envs
                                                    (assq-ref 'projname spec)
@@ -336,6 +342,20 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 (define (action-by-number envs number)
+  (define (do-restow target delete-item restow-item)
+    (let1 script (string-join
+                  (list
+                   (sprintf "cd %s" target)
+                   (if (null? delete-item)
+                       ""
+                       (sprintf "stow -D %s" (car delete-item)))
+                   (if (null? restow-item)
+                       ""
+                       (sprintf "stow -R %s" (car restow-item)))
+                   "")
+                  "\n")
+      (exec-sh script)))
+
   (let* ((lst (get-stowed-list envs))
          ;; ----------
          ;; search the number in list
@@ -372,22 +392,19 @@ true; exec /usr/local/bin/nendo $0 $*
               (printf "Error: selected number [%d] was not installed yet. \n" number)
               (exit 1))
              ((equal? delete-item restow-item)
-              (printf "Info: selected program [%s] was already restowed. \n" (car restow-item))
-              (exit 0))
+              (printf "Info: force restow [%s] again? [Y/n]\n" (car restow-item))
+              (let* ((ch STDIN.getc)
+                     (_do
+                      (if (nil? ch)
+                          #f
+                          (not (ch.chr.match "[nN]")))))
+                (if _do
+                    (do-restow (assq-ref 'target envs) delete-item restow-item)
+                    (begin
+                      (printf "Info: `restow -R' was canceled. \n" (car restow-item))
+                      (exit 0)))))
              (else
-              (let1 script (string-join
-                            (list
-                             (sprintf "cd %s" (assq-ref 'target envs))
-                             (if (null? delete-item)
-                                 ""
-                                 (sprintf "stow -D %s" (car delete-item)))
-                             (if (null? restow-item)
-                                 ""
-                                 (sprintf "stow -R %s" (car restow-item)))
-                             "")
-                            "\n")
-                (exec-sh script)))))))))
-
+              (do-restow (assq-ref 'target envs) delete-item restow-item))))))))
 
 
 (define (action-by-arg envs argv)
@@ -447,6 +464,8 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 (define (main argv)
+  (if (File.exist? initfile-path)
+      (load initfile-path))
   (let1 envs (get-envs)
     (case (length argv)
       ((0)
@@ -457,5 +476,17 @@ true; exec /usr/local/bin/nendo $0 $*
          (action-by-number envs (to-i (car argv))))
         (else
          (action-by-arg    envs argv)))))))
+
+
+
+;; ----------------------------------------
+;; utility for user's "specfile" file.
+;; ----------------------------------------
+(define stowspec nil)
+(define (define-stowspec alist)
+  (set! stowspec alist))
+(define uname 
+  (let1 f (IO.popen "uname" "r+")
+    f.readline.chop))
 
 (main (cdr ARGV.to_list))

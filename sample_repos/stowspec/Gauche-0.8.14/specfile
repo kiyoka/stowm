@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(
+ (conf . "./configure --prefix=/usr/local/stow/Gauche-0.8.14 ")
+ (make . "make")
+ (install . "make install")
+ (arc . "Gauche-0.8.14.tgz")
+ (url . "http://prdownloads.sourceforge.net/gauche/Gauche-0.8.14.tgz")
+ (projname . "Gauche-0.8.14")
+)

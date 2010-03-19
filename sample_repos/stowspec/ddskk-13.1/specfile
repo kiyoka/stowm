@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(if (not (eq? "Darwin" uname))
+    (print "This project can be build only darwin(MacOS X)")
+    (define-stowspec '(
+                       (conf . "")
+                       (make . "make  EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs")
+                       (install . "make install  EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs")
+                       (arc . "ddskk-13.1.tar.gz")
+                       (url)
+                       (projname . "ddskk-13.1")
+                       )))
+
+
+

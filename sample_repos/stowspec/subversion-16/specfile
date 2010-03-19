@@ -1,0 +1,17 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(if (not (eq? "Darwin" uname))
+    (print "This project can be build only darwin(MacOS X)")
+    (define-stowspec '(
+                       (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/subversion-16 
+")
+                       (make . "make")
+                       (install . "make install")
+                       (arc . "subversion-16.tar.gz")
+                       (url . "http://www.opensource.apple.com/tarballs/subversion/subversion-16.tar.gz")
+                       (projname . "subversion-16")
+                       )))
+

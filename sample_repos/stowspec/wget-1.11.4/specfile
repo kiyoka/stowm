@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/wget-1.11.4 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "wget-1.11.4.tar.gz")
+ (url)
+ (projname . "wget-1.11.4")
+))
