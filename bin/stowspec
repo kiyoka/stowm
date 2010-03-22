@@ -156,17 +156,23 @@ true; exec /usr/local/bin/nendo $0 $*
                     "")
                    "\n"))
         (build . ,(string-join
-                   (list
-                    (sprintf "/bin/rm -rf %s/%s" workdir projname)
-                    (sprintf "mkdir -p %s" workdir)
-                    (sprintf "/bin/cp -f %s %s" arc workdir)
-                    (sprintf "cd %s" workdir)
-                    (sprintf "tar zxf %s" arc)
-                    (sprintf "cd ./%s"    projname)
-                    (assq-ref 'conf       spec)
-                    (assq-ref 'make       spec)
-                    (assq-ref 'install    spec)
-                    "")
+                   (append
+                    (if (and url (not (File.exist? (+ "./" arc))))
+                        (list
+                         (sprintf "echo file [%s] was not found, so, I fetch it again." arc url)
+                         (sprintf "wget -O ./%s %s" arc url))
+                        '())
+                    (list
+                     (sprintf "/bin/rm -rf %s/%s" workdir projname)
+                     (sprintf "mkdir -p %s" workdir)
+                     (sprintf "/bin/cp -f %s %s" arc workdir)
+                     (sprintf "cd %s" workdir)
+                     (sprintf "tar zxf %s" arc)
+                     (sprintf "cd ./%s"    projname)
+                     (assq-ref 'conf       spec)
+                     (assq-ref 'make       spec)
+                     (assq-ref 'install    spec)
+                     ""))
                    "\n"))
         (stowspec . ,(string-join
                       (list

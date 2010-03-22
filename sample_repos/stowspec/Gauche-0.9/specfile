@@ -9,6 +9,6 @@ fi
  (make . "make")
  (install . "make install")
  (arc . "Gauche-0.9.tgz")
- (url)
+ (url . "http://prdownloads.sourceforge.net/gauche/Gauche-0.9.tgz")
  (projname . "Gauche-0.9")
 ))
