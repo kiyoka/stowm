@@ -4,11 +4,11 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/ruby-1.9.1-p376 
+./configure --prefix=/usr/local/stow/emacs-w3m-20100322-CVS 
 ")
  (make . "make")
  (install . "make install")
- (arc . "ruby-1.9.1-p376.tar.gz")
- (url . "http://ftp.ruby-lang.org/pub/ruby/1.9/ruby-1.9.1-p376.tar.gz")
- (projname . "ruby-1.9.1-p376")
+ (arc . "emacs-w3m-20100322-CVS.tar.gz")
+ (url)
+ (projname . "emacs-w3m-20100322-CVS")
 ))
