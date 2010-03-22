@@ -1,9 +1,14 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(
- (conf . "./configure --prefix=/usr/local/stow/Gauche-0.8.14 ")
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/Gauche-0.8.14 
+")
  (make . "make")
  (install . "make install")
  (arc . "Gauche-0.8.14.tgz")
  (url . "http://prdownloads.sourceforge.net/gauche/Gauche-0.8.14.tgz")
  (projname . "Gauche-0.8.14")
-)
+))
