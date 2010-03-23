@@ -313,38 +313,51 @@ true; exec /usr/local/bin/nendo $0 $*
 
 
 (define (action-by-curdir envs)
+  (define (load-specfile envs)
+    (load "./specfile")
+    (or stowspec
+        (begin
+          (STDERR.printf "Error: spec was not defined... please use (define-stowspec '(...)) form\n")
+          (exit 1))))
+
+  (define (do-build envs spec)
+    (let1 project-envs (get-project-envs envs
+                                         (assq-ref 'projname spec)
+                                         (assq-ref 'arc      spec)
+                                         (assq-ref 'url      spec))
+      (exec-sh
+       (assq-ref 'build (gen-script
+                         envs
+                         project-envs
+                         spec)))))
+  
   (let1 curdir-info (get-curdir-info envs)
     (cond
      ((eq? 'specdir (car curdir-info))
       ;; ----------
-      ;; build!
+      ;; load specfile
       ;; ----------
-      (if (not (File.exist? "./specfile"))
-          (begin
-            (print "Error: ./specfile does not exist...")
-            (exit 1))
-          (begin
-            (load "./specfile")
-            (when (not stowspec)
-              (STDERR.printf "Error: spec was not defined... please use (define-stowspec '(...)) form\n")
-              (exit 1))
-            (let* ((spec stowspec)
-                   (project-envs (get-project-envs envs
-                                                   (assq-ref 'projname spec)
-                                                   (assq-ref 'arc      spec)
-                                                   (assq-ref 'url      spec))))
-              (exec-sh
-               (assq-ref 'build (gen-script
-                                 envs
-                                 project-envs
-                                 spec)))))))
+
+      (let* ((spec (load-specfile envs))
+             (_ (append envs spec))
+             (assoc-to-local _ target)
+             (assoc-to-local _ projname))
+        ;; ----------
+        ;; build!
+        ;; ----------
+        (if (not (File.exist? (+ target "/" projname)))
+            (do-build envs spec)
+            (begin
+              (printf "Warning: [%s] was already built and installed. rebuild? [Y/n]\n" projname)
+              (if (yes-or-no?)
+                  (do-build envs spec)
+                  (printf "Info: build [%s] was canceled. \n" projname))))))
      (else
       ;; ----------
       ;; show current stowed status
       ;; ----------
       (listing 
-       (get-stowed-list envs)))
-     )))
+       (get-stowed-list envs))))))
 
 
 (define (get-project-envs envs projname arc url)
