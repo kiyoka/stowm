@@ -13,6 +13,18 @@ true; exec /usr/local/bin/nendo $0 $*
 (define stow-bin    "/usr/local/bin")
 (define stow-lib    "/usr/local/lib")
 (define stow-temp   "/tmp/stowspec")
+(define stow-program
+  (let1 lst
+      (filter-map
+       (lambda (prog)
+         (let1 path (+ "/usr/local/bin/" prog)
+           (if (File.exist? path) path)))
+       '("xstow" "stow"))
+    (if (< 0 (length lst))
+        (car lst)
+        (begin
+          (STDIO.puts "Error: not found the stow program. (or xstow) ")
+          (exit 1)))))
 
 ;; `regex' is a string ( not a regex object )
 ;; returns ( $0-string  $1-string  $2-string  $3-string ... )
@@ -354,10 +366,10 @@ true; exec /usr/local/bin/nendo $0 $*
                    (sprintf "cd %s" target)
                    (if (null? delete-item)
                        ""
-                       (sprintf "stow -D %s" (car delete-item)))
+                       (sprintf "%s -D %s" stow-program (car delete-item)))
                    (if (null? restow-item)
                        ""
-                       (sprintf "stow -R %s" (car restow-item)))
+                       (sprintf "%s -R %s" stow-program (car restow-item)))
                    "")
                   "\n")
       (exec-sh script)))
