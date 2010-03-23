@@ -284,13 +284,13 @@ true; exec /usr/local/bin/nendo $0 $*
 (define (listing stowed-list)
   (define (ox bool-val)
     (if bool-val "O" "-"))
-  (define _format_h "       %-25s %10s %10s %10s\n")
-  (define _format_d "   %2d) %-25s %10s %10s %10s\n")
+  (define _format_h "       %-25s %10s %10s\n")
+  (define _format_d "   %2d) %-25s %10s %10s\n")
 
   (print
    (apply +
           (cons
-           (sprintf _format_h "       <name>" "<enabled>" "<installed>" "<source>")
+           (sprintf _format_h "       <name>" "<enabled>" "<installed>")
            (map
             (lambda (tree)
               (apply +
@@ -302,8 +302,7 @@ true; exec /usr/local/bin/nendo $0 $*
                                   (sixth x)
                                   (+ " " (first x))
                                   (ox (second x))
-                                  (ox (third x))
-                                  (ox (fourth x))))
+                                  (ox (third x))))
                        (cdr tree)))))
             (stowed-list-to-tree stowed-list))))))
     
