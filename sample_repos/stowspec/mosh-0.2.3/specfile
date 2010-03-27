@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/mosh-0.2.3 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "mosh-0.2.3.tar.gz")
+ (url . "http://mosh-scheme.googlecode.com/files/mosh-0.2.3.tar.gz")
+ (projname . "mosh-0.2.3")
+))

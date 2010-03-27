@@ -1,0 +1,19 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(let1 configure-base
+    (if (eq? "Darwin" uname)
+        "CFLAGS+=\"-m32 -force_cpusubtype_ALL\" ./configure ABI=32"
+        "./configure")
+  (define-stowspec `(
+                     (conf . ,(+
+                              "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+"
+#?=configure-base " --prefix=/usr/local/stow/gmp-5.0.1\n"))
+                     (make . "make")
+                     (install . "make install")
+                     (arc . "gmp-5.0.1.tar.gz")
+                     (url . "http://core.ring.gr.jp/pub/GNU/gmp/gmp-5.0.1.tar.gz")
+                     (projname . "gmp-5.0.1")
+                     )))
