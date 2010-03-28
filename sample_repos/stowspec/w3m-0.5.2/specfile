@@ -1,9 +1,14 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(
- (conf . "./configure --prefix=/usr/local/stow/w3m-0.5.2 ")
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/w3m-0.5.2 
+")
  (make . "make")
  (install . "make install")
  (arc . "w3m-0.5.2.tar.gz")
  (url)
  (projname . "w3m-0.5.2")
-)
+))
