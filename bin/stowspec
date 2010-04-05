@@ -1,6 +1,6 @@
 #!/bin/sh
-true; #-*- mode: nendo; syntax: scheme -*-;;
-true; exec /usr/local/bin/nendo $0 $*
+:; #-*- mode: nendo; syntax: scheme -*-;;
+:; exec /usr/local/bin/nendo $0 $*
 
 
 (define debug-print-length 1024)
@@ -33,7 +33,7 @@ true; exec /usr/local/bin/nendo $0 $*
 ;; `regex' is a string ( not a regex object )
 ;; returns ( $0-string  $1-string  $2-string  $3-string ... )
 (define (regex-match regex str)
-  (let1 matchdata ((. str match) regex)
+  (let1 matchdata (str.match regex)
     (if matchdata
         (matchdata.to_a.to_list)
         nil)))
@@ -41,6 +41,17 @@ true; exec /usr/local/bin/nendo $0 $*
 ;; test
 ;;(regex-match "^[a-z]+$" "abc")
 ;;(regex-match "^([a-z]+)([0-9]+)$" "abc123")
+
+
+(define (display-help)
+  (print "")
+  (print "Usage: ")
+  (print "  1. stowspec enable  number       ... enable  program. (rewtow -R)")
+  (print "  2. stowspec disable number       ... disable program. (rewtow -D)")
+  (print "  3. stowspec [URL of tar.gz]      ... fetch, setup specfile, build program.")
+  (print "  4. stowspec tar.gz               ... setup specfile, build program.")
+  (print "  5. stowspec                      ... list up installed program list.")
+  (print ""))
 
 
 (require "digest/md5")
@@ -381,7 +392,7 @@ true; exec /usr/local/bin/nendo $0 $*
         #f
         (not (ch.chr.match "[nN]")))))
 
-(define (action-by-number envs number)
+(define (action-by-keyword envs keyword number)
   (define (do-restow target delete-item restow-item)
     (let1 script (string-join
                   (list
@@ -396,8 +407,13 @@ true; exec /usr/local/bin/nendo $0 $*
                   "\n")
       (exec-sh script)))
 
-  (let* ((delete-action (negative? number))
-         (number (abs number))
+  (let1 keywords '("enable" "disable")
+    (when (not (memv keyword keywords))
+      (printf "Error: usable keywords are (%s) " (string-join keywords " or "))
+      (display-help)
+      (exit 1)))
+
+  (let* ((delete-action (eq? "disable" keyword))
          (lst (get-stowed-list envs))
          ;; ----------
          ;; search the number in list
@@ -451,9 +467,13 @@ true; exec /usr/local/bin/nendo $0 $*
          (m2 (regex-match (+ "^" archive-file-pattern "$") (car argv)))
          (url      (if m1 (car m1) nil))
          (arc      (if m1 (second m1)
-                       (if m2 (car m2) nil)))
-         (projname (or (tgz-to-name arc) "")))
-    (let* ((project-envs (get-project-envs envs projname arc url))
+                       (if m2 (car m2) nil))))
+    (when (not (or m1 m2))
+      (printf "Error: Please specify complete URL or local archive file name.\n")
+      (display-help)
+      (exit 1))
+    (let* ((projname (or (tgz-to-name arc) ""))
+           (project-envs (get-project-envs envs projname arc url))
            (assoc-to-local project-envs workdir)
            (assoc-to-local project-envs specfile)
            (assoc-to-local project-envs projpath))
@@ -511,8 +531,8 @@ true; exec /usr/local/bin/nendo $0 $*
        (action-by-curdir envs))
       (else
        (cond
-        ((regex-match "^[-]?[0-9]+$" (car argv))
-         (action-by-number envs (to-i (car argv))))
+        ((regex-match "[a-zA-Z]+$" (car argv))
+         (action-by-keyword envs (car argv) (to-i (cadr argv))))
         (else
          (action-by-arg    envs argv)))))))
 
