@@ -531,7 +531,7 @@
        (action-by-curdir envs))
       (else
        (cond
-        ((regex-match "[a-zA-Z]+$" (car argv))
+        ((regex-match "^[a-zA-Z]+$" (car argv))
          (action-by-keyword envs (car argv) (to-i (cadr argv))))
         (else
          (action-by-arg    envs argv)))))))
