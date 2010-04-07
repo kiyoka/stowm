@@ -1,10 +1,15 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
+;;
+;; with MacOS +  libgmp-5.0.1 on MacPorts.
+;;
 (define-stowspec '(
  (conf . "if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/mosh-0.2.3 
+export LDFLAGS=-L/opt/local/lib
+export CPPFLAGS=-I/opt/local/include
+./configure --prefix=/usr/local/stow/mosh-0.2.3
 ")
  (make . "make")
  (install . "make install")
