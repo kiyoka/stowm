@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/erlang_13.04 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "erlang_13.04.tar.gz")
+ (url)
+ (projname . "erlang_13.04")
+))

@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/ImageMagick-6.6.0-10 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "ImageMagick-6.6.0-10.tar.gz")
+ (url)
+ (projname . "ImageMagick-6.6.0-10")
+))
