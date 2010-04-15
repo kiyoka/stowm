@@ -242,11 +242,10 @@
   (if (not projname)
       false
       ;; checking installed file counts.
-      (< 0 (length
-            (filter
-             (lambda (x)
-               (regex-match (+ "[/]" projname "[/]") x))
-             linklist)))))
+      (find
+       (lambda (x)
+         (regex-match (+ "[/]" projname "[/]") x))
+       linklist)))
 
 (define (get-stowed-list envs)
   (let* ((projs    (get-dir-entries (assq-ref 'stow-home envs)))
