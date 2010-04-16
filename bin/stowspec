@@ -258,7 +258,9 @@
        (let1 result
            (cons x
                  (list
-                  (if (binary-installed? envs linklist x) 'i false)
+                  (if (memv x stowed)
+                      (if (binary-installed? envs linklist x) 'i false)
+                      false)
                   (if (memv x stowed) 's false)
                   (if (memv x projs ) 'p false)
                   (get-project-basename x)
