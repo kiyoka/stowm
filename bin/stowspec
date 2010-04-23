@@ -520,8 +520,27 @@
 
 
 (define (main argv)
+  ;; version check
+  (let ((ver (map
+              (lambda (x)
+                (x.to_i))
+              (to-list (*nendo-version*.split "\."))))
+        (_first  0)
+        (_second 3)
+        (_third  1))
+    (unless (and
+             (<=  _first  (first  ver))
+             (<=  _second (second ver))
+             (<=  _third  (third  ver)))
+      (printf "Error: Stowspec expects nendo %s.%s.%s or later version.\n" _first _second _third)
+      (printf "       Installed nendo version is [%s]\n" *nendo-version*)
+      (exit 1)))
+
+  ;; load dotfiles
   (if (File.exist? initfile-path)
       (load initfile-path))
+
+  ;; branch by argument
   (let1 envs (get-envs)
     (case (length argv)
       ((0)
