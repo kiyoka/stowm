@@ -2,7 +2,6 @@
 :; #-*- mode: nendo; syntax: scheme -*-;;
 :; exec /usr/local/bin/nendo $0 $*
 
-
 (define debug-print-length 1024)
 (define pp pretty-print)
 
@@ -287,7 +286,7 @@
     (for-each
      (lambda (x)
        (hash-table-push! program-hash (fifth x) x))
-     lst)
+     (reverse lst))
     (hash-table->alist program-hash)))
 
 ;; test
