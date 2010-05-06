@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/guile-1.9.10 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "guile-1.9.10.tar.gz")
+ (url . "http://www.sfr-fresh.com/unix/misc/guile-1.9.10.tar.gz")
+ (projname . "guile-1.9.10")
+))

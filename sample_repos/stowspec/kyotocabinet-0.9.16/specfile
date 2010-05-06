@@ -1,0 +1,16 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+export CC=/opt/local/bin/gcc-mp-4.4
+export CXX=/opt/local/bin/g++-mp-4.4
+./configure --prefix=/usr/local/stow/kyotocabinet-0.9.16 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "kyotocabinet-0.9.16.tar.gz")
+ (url . "http://1978th.net/kyotocabinet/kyotocabinet-0.9.16.tar.gz")
+ (projname . "kyotocabinet-0.9.16")
+))

@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/git-1.7.0.6 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "git-1.7.0.6.tar.gz")
+ (url . "http://kernel.org/pub/software/scm/git/git-1.7.0.6.tar.gz")
+ (projname . "git-1.7.0.6")
+))
