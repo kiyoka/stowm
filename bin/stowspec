@@ -566,4 +566,5 @@
   (let1 f (IO.popen "uname" "r+")
     f.readline.chop))
 
-(main (cdr ARGV.to_list))
+(main *argv*)
+
