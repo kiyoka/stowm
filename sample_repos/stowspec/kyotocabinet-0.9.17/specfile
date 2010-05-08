@@ -4,11 +4,11 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/kyotocabinet-0.9.16 
+./configure --prefix=/usr/local/stow/kyotocabinet-0.9.17   --enable-static
 ")
  (make . "make")
  (install . "make install")
- (arc . "kyotocabinet-0.9.16.tar.gz")
- (url . "http://1978th.net/kyotocabinet/kyotocabinet-0.9.16.tar.gz")
- (projname . "kyotocabinet-0.9.16")
+ (arc . "kyotocabinet-0.9.17.tar.gz")
+ (url . "http://1978th.net/kyotocabinet/kyotocabinet-0.9.17.tar.gz")
+ (projname . "kyotocabinet-0.9.17")
 ))

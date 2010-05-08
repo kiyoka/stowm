@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/gcc-4.5.0 --with-gmp=/opt/local --with-mpfr=/opt/local
+./configure --prefix=/usr/local/stow/gcc-4.5.0 --with-gmp=/opt/local --with-mpfr=/opt/local --with-libiconv-prefix=/opt/local
 ")
  (make . "make")
  (install . "make install")
