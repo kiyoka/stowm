@@ -369,7 +369,9 @@
       ;; show current stowed status
       ;; ----------
       (listing 
-       (get-stowed-list envs))))))
+       (get-stowed-list envs))
+      (print  "[stow-home]")
+      (printf " cd %s\n" stow-home)))))
 
 
 (define (get-project-envs envs projname arc url)
