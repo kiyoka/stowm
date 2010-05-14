@@ -567,6 +567,3 @@
 (define uname 
   (let1 f (IO.popen "uname" "r+")
     f.readline.chop))
-
-(main *argv*)
-
