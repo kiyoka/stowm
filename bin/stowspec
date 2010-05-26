@@ -189,6 +189,7 @@
                          (sprintf "wget -O ./%s %s" arc url))
                         '())
                     (list
+                     (sprintf "export TMPDIR=/tmp")
                      (sprintf "/bin/rm -rf %s/%s" workdir projname)
                      (sprintf "mkdir -p %s" workdir)
                      (sprintf "/bin/cp -f %s %s" arc workdir)
