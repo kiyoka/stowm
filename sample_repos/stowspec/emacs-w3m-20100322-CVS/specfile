@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/emacs-w3m-20100322-CVS 
+./configure --prefix=/usr/local/stow/emacs-w3m-20100322-CVS  --with-lispdir=/Applications/Emacs.app/Contents/Resources/site-lisp --with-emacs=/Applications/Emacs.app/Contents/MacOS/Emacs
 ")
  (make . "make")
  (install . "make install")
