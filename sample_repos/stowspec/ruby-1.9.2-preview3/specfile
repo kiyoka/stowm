@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/ruby-1.9.2-preview3 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "ruby-1.9.2-preview3.tar.gz")
+ (url)
+ (projname . "ruby-1.9.2-preview3")
+))
