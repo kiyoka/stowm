@@ -169,7 +169,10 @@
          (assoc-to-local _ projpath)
          (assoc-to-local _ arc)
          (assoc-to-local _ workdir)
-         (assoc-to-local _ url))
+         (assoc-to-local _ url)
+         (url (if (null? url)
+                  #f
+                  url)))
     (begin
       `(
         (store . ,(string-join
@@ -183,12 +186,20 @@
                    "\n"))
         (build . ,(string-join
                    (append
-                    (if (and url (not (File.exist? (+ "./" arc))))
-                        (list
-                         (sprintf "echo file [%s] was not found, so, I fetch it again." arc url)
-                         (sprintf "wget -O ./%s %s" arc url))
+                    (if (not (File.exist? (+ "./" arc)))
+                        (if url
+                            (list
+                             (sprintf "echo file [%s] was not found, so, I fetch it again." arc url)
+                             (sprintf "wget -O ./%s %s" arc url))
+                            (list
+                             (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc)
+                             (sprintf "/bin/cp ~/Downloads/%s ." arc)))
                         '())
                     (list
+                     (sprintf "if [ ! -e \"./%s\" ] ; then " arc)
+                     (sprintf "  echo file [%s] was not found." arc)
+                     (sprintf "  exit 1 ")
+                     (sprintf "fi")
                      (sprintf "export TMPDIR=/tmp")
                      (sprintf "/bin/rm -rf %s/%s" workdir projname)
                      (sprintf "mkdir -p %s" workdir)
