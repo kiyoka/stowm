@@ -1,0 +1,26 @@
+diff -ru gc-7.1/mach_dep.c gc-7.1.snowleopard/mach_dep.c
+--- gc-7.1/mach_dep.c	2007-08-14 06:49:11.000000000 +0900
++++ gc-7.1.snowleopard/mach_dep.c	2010-06-25 12:22:05.000000000 +0900
+@@ -160,7 +160,7 @@
+ #endif
+ 
+ #if !defined(HAVE_PUSH_REGS) && defined(UNIX_LIKE)
+-# include <ucontext.h>
++# include <sys/ucontext.h>
+ #endif
+ 
+ /* Ensure that either registers are pushed, or callee-save registers	*/
+Only in gc-7.1.snowleopard: mach_dep.c~
+diff -ru gc-7.1/os_dep.c gc-7.1.snowleopard/os_dep.c
+--- gc-7.1/os_dep.c	2008-03-01 04:01:28.000000000 +0900
++++ gc-7.1.snowleopard/os_dep.c	2010-06-25 12:22:19.000000000 +0900
+@@ -2752,7 +2752,7 @@
+ # if defined(MSWIN32) || defined(MSWINCE)
+     LONG WINAPI GC_write_fault_handler(struct _EXCEPTION_POINTERS *exc_info)
+ # else
+-#   include <ucontext.h>
++#   include <sys/ucontext.h>
+     /*ARGSUSED*/
+     void GC_write_fault_handler(int sig, siginfo_t *si, void *raw_sc)
+ # endif /* MSWIN32 || MSWINCE */
+Only in gc-7.1.snowleopard: os_dep.c~
