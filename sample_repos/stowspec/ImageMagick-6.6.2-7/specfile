@@ -1,0 +1,19 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+;;
+;; 
+;;     libpng-1.2.44                     OK
+;;     libpng-1.4.2                      NG ... occur libpng.h error.
+;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/ImageMagick-6.6.2-7 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "ImageMagick-6.6.2-7.tar.gz")
+ (url)
+ (projname . "ImageMagick-6.6.2-7")
+))
