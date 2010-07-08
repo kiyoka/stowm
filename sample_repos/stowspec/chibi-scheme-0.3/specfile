@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/chibi-scheme-0.3 
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "chibi-scheme-0.3.tgz")
+ (url)
+ (projname . "chibi-scheme-0.3")
+))
