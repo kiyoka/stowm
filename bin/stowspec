@@ -63,8 +63,7 @@
      (lambda (f)
        (f.puts script))
      "w")
-    (print "---BEGIN---")
-    (display script)
+    (printf "---BEGIN---(%s)\n" tmpfile)
     (.system (+ "bash " tmpfile))
     (print "---END---")
     (File.delete tmpfile)))
@@ -164,6 +163,15 @@
       
 
 (define (gen-script envs project-envs spec)
+  (define (echo str)
+    (string-join
+     (list
+      (sprintf "echo \" \" ============================================================")
+      (sprintf "echo \" \" [[ %s ]]\n %s" str str)
+      (sprintf "echo \" \" ============================================================"))
+     "\n"))
+  (define (pass str) str)
+
   (let* ((_ (append envs project-envs))
          (assoc-to-local _ projname)
          (assoc-to-local _ projpath)
@@ -179,8 +187,8 @@
                    (list
                     (sprintf "mkdir -p %s" projpath)
                     (if url
-                        (sprintf "wget -O %s/%s %s"      projpath arc url)
-                        (sprintf "/bin/cp %s %s"         arc projpath))
+                        (echo (sprintf "wget -O %s/%s %s"      projpath arc url))
+                        (pass (sprintf "/bin/cp %s %s"         arc projpath)))
                     (sprintf "cd %s" projpath)
                     "")
                    "\n"))
@@ -189,11 +197,11 @@
                     (if (not (File.exist? (+ "./" arc)))
                         (if url
                             (list
-                             (sprintf "echo file [%s] was not found, so, I fetch it again." arc url)
-                             (sprintf "wget -O ./%s %s" arc url))
+                             (pass (sprintf "echo file [%s] was not found, so, I fetch it again." arc url))
+                             (echo (sprintf "wget -O ./%s %s" arc url)))
                             (list
-                             (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc)
-                             (sprintf "/bin/cp ~/Downloads/%s ." arc)))
+                             (pass (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc))
+                             (echo (sprintf "/bin/cp ~/Downloads/%s ." arc))))
                         '())
                     (list
                      (sprintf "if [ ! -e \"./%s\" ] ; then " arc)
@@ -211,12 +219,12 @@
                      (sprintf "tar zxf %s" arc)
                      (sprintf "for i in `ls -1 | grep .patch` ;")
                      (sprintf "do")
-                     (sprintf "  patch -p 0 -i ${i}")
+                     (echo (sprintf "  patch -p 0 -i ${i}"))
                      (sprintf "done")
                      (sprintf "cd ./%s"    projname)
                      (assq-ref 'conf       spec)
-                     (assq-ref 'make       spec)
-                     (assq-ref 'install    spec)
+                     (echo (assq-ref 'make       spec))
+                     (echo (assq-ref 'install    spec))
                      ""))
                    "\n"))
         (stowspec . ,(string-join
@@ -520,7 +528,11 @@
                                             "  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'"
                                             "  exit 1"
                                             "fi"
-                                            (sprintf "./configure --prefix=%s/%s " (assq-ref 'target envs) projname)
+                                            (sprintf "command='./configure --prefix=%s/%s' " (assq-ref 'target envs) projname)
+                                            (sprintf "echo \" \" ============================================================")
+                                            (sprintf "echo \" \" [[ ${command} ]]")
+                                            (sprintf "echo \" \" ============================================================")
+                                            "${command}"
                                             "")
                                            "\n"))
                               (make      . "make")
