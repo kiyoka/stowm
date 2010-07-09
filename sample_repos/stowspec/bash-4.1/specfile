@@ -4,7 +4,11 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/bash-4.1 
+command='./configure --prefix=/usr/local/stow/bash-4.1' 
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
 ")
  (make . "make")
  (install . "make install")
