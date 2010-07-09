@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/Gauche-0.9 
+./configure --prefix=/usr/local/stow/Gauche-0.9 --with-iconv=/usr/local
 ")
  (make . "make")
  (install . "make install")
