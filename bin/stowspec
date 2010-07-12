@@ -162,15 +162,16 @@
       (+ filename ":" projname))))
       
 
+(define (echo-str str)
+  (string-join
+   (list
+    (sprintf "echo \" \" ============================================================")
+    (sprintf "echo \" \" [[ %s ]]\n %s" str str)
+    (sprintf "echo \" \" ============================================================"))
+   "\n"))
+(define (pass-str str) str)
+
 (define (gen-script envs project-envs spec)
-  (define (echo str)
-    (string-join
-     (list
-      (sprintf "echo \" \" ============================================================")
-      (sprintf "echo \" \" [[ %s ]]\n %s" str str)
-      (sprintf "echo \" \" ============================================================"))
-     "\n"))
-  (define (pass str) str)
 
   (let* ((_ (append envs project-envs))
          (assoc-to-local _ projname)
@@ -187,8 +188,8 @@
                    (list
                     (sprintf "mkdir -p %s" projpath)
                     (if url
-                        (echo (sprintf "wget -O %s/%s %s"      projpath arc url))
-                        (pass (sprintf "/bin/cp %s %s"         arc projpath)))
+                        (echo-str (sprintf "wget -O %s/%s %s"      projpath arc url))
+                        (pass-str (sprintf "/bin/cp %s %s"         arc projpath)))
                     (sprintf "cd %s" projpath)
                     "")
                    "\n"))
@@ -197,11 +198,11 @@
                     (if (not (File.exist? (+ "./" arc)))
                         (if url
                             (list
-                             (pass (sprintf "echo file [%s] was not found, so, I fetch it again." arc url))
-                             (echo (sprintf "wget -O ./%s %s" arc url)))
+                             (pass-str (sprintf "echo file [%s] was not found, so, I fetch it again." arc url))
+                             (echo-str (sprintf "wget -O ./%s %s" arc url)))
                             (list
-                             (pass (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc))
-                             (echo (sprintf "/bin/cp ~/Downloads/%s ." arc))))
+                             (pass-str (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc))
+                             (echo-str (sprintf "/bin/cp ~/Downloads/%s ." arc))))
                         '())
                     (list
                      (sprintf "if [ ! -e \"./%s\" ] ; then " arc)
@@ -219,12 +220,12 @@
                      (sprintf "tar zxf %s" arc)
                      (sprintf "for i in `ls -1 | grep .patch` ;")
                      (sprintf "do")
-                     (echo (sprintf "  patch -p 0 -i ${i}"))
+                     (echo-str (sprintf "  patch -p 0 -i ${i}"))
                      (sprintf "done")
                      (sprintf "cd ./%s"    projname)
                      (assq-ref 'conf       spec)
-                     (echo (assq-ref 'make       spec))
-                     (echo (assq-ref 'install    spec))
+                     (echo-str (assq-ref 'make       spec))
+                     (echo-str (assq-ref 'install    spec))
                      ""))
                    "\n"))
         (stowspec . ,(string-join
@@ -425,10 +426,10 @@
                    (sprintf "cd %s" target)
                    (if (null? delete-item)
                        ""
-                       (sprintf "%s -D %s" stow-program (car delete-item)))
+                       (echo-str (sprintf "%s -D %s" stow-program (car delete-item))))
                    (if (null? restow-item)
                        ""
-                       (sprintf "%s -R %s" stow-program (car restow-item)))
+                       (echo-str (sprintf "%s -R %s" stow-program (car restow-item))))
                    "")
                   "\n")
       (exec-sh script)))
