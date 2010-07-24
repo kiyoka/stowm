@@ -1,7 +1,7 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
 (let1 emacs-opt (if (eq? "Darwin" uname)
                     "--with-emacs=/Applications/Emacs.app/Contents/MacOS/Emacs"
-                    "")
+                    "--with-emacs=/usr/local/bin/emacs")
   (define-stowspec `(
                      (conf . ,(+ "if [ ! -e ./configure ] ; then \n"
                                  "  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...' \n"
@@ -15,6 +15,5 @@
                      (url . "http://www.mew.org/Release/mew-6.3.tar.gz")
                      (projname . "mew-6.3")
                      )))
-
 
 
