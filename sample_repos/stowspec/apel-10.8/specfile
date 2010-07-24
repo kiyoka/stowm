@@ -1,11 +1,16 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(if (not (eq? "Darwin" uname))
-    (print "This project can be build only darwin(MacOS X)")
-    (define-stowspec '(
-		       (conf . "")
-		       (make . "make EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs")
-                       (install . "make install  EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs")
-		       (arc . "apel-10.8.tar.gz")
-		       (url . "http://kanji.zinbun.kyoto-u.ac.jp/~tomo/lemi/dist/apel/apel-10.8.tar.gz")
-		       (projname . "apel-10.8")
-		       )))
+(let1 emacs-bin (cond
+		 ((eq? "Darwin" uname)
+		  "/Applications/Emacs.app/Contents/MacOS/Emacs")
+		 (else
+		  "/usr/local/bin/emacs"))
+      (define-stowspec `(      
+			 (conf . "")
+			 (make .    ,(+ "make EMACS=" emacs-bin))
+			 (install . ,(+ "make install  EMACS=" emacs-bin))
+			 (arc . "apel-10.8.tar.gz")
+			 (url . "http://kanji.zinbun.kyoto-u.ac.jp/~tomo/lemi/dist/apel/apel-10.8.tar.gz")
+			 (projname . "apel-10.8"))))
+
+
+
