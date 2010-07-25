@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-./configure --prefix=/usr/local/stow/tokyocabinet-1.4.45 
+./configure --prefix=/usr/local/stow/tokyocabinet-1.4.45 --disable-bzip 
 ")
  (make . "make")
  (install . "make install")
