@@ -1,14 +1,10 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-;;
-;; See:
-;;   http://multimedia.cx/eggs/libvpx-0-9-1-and-ffmpeg-0-6/
-;; 
 (define-stowspec '(
  (conf . "if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/ffmpeg-0.6 --enable-libvpx --enable-libvorbis --enable-pthreads'
+command='./configure --prefix=/usr/local/stow/libvpx-0.9.1' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
@@ -16,7 +12,7 @@ ${command}
 ")
  (make . "make")
  (install . "make install")
- (arc . "ffmpeg-0.6.tar.gz")
- (url . "http://www.ffmpeg.org/releases/ffmpeg-0.6.tar.gz")
- (projname . "ffmpeg-0.6")
+ (arc . "libvpx-0.9.1.tar.gz")
+ (url . nil)
+ (projname . "libvpx-0.9.1")
 ))
