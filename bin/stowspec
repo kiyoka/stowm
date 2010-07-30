@@ -17,19 +17,19 @@
 (define stow-program
   (let1 lst
       (filter-map
-       (lambda (prog)
-         (let ((path1 (+ "/usr/bin/" prog))
-               (path2 (+ "/usr/local/bin/" prog)))
+       (lambda (x)
+         (let ((path1 (+ "/usr/bin/" (car x)))
+               (path2 (+ "/usr/local/bin/" (car x))))
            (if (File.exist? path1)
-               path1
+               (cons path1 (cdr x))
                (if (File.exist? path2)
-                   path2))))
-       '("xstow -f " "stow"))
-      (if (< 0 (length lst))
-          (car lst)
-          (begin
-            (STDERR.puts "Error: not found the stow program. (or xstow) ")
-            (exit 1)))))
+                   (cons path2 (cdr x))))))
+       '(("xstow" . "-f") ("stow" . "")))
+    (if (< 0 (length lst))
+        (car lst)
+        (begin
+          (STDERR.puts "Error: not found the stow program. (or xstow) ")
+          (exit 1)))))
 
 ;; `regex' is a string ( not a regex object )
 ;; returns ( $0-string  $1-string  $2-string  $3-string ... )
@@ -426,10 +426,10 @@
                    (sprintf "cd %s" target)
                    (if (null? delete-item)
                        ""
-                       (echo-str (sprintf "%s -D %s" stow-program (car delete-item))))
+                       (echo-str (sprintf "%s %s -D %s" (car stow-program) (cdr stow-program) (car delete-item))))
                    (if (null? restow-item)
                        ""
-                       (echo-str (sprintf "%s -R %s" stow-program (car restow-item))))
+                       (echo-str (sprintf "%s %s -R %s" (car stow-program) (cdr stow-program) (car restow-item))))
                    "")
                   "\n")
       (exec-sh script)))
