@@ -2,6 +2,8 @@
 :; #-*- mode: nendo; syntax: scheme -*-;;
 :; exec /usr/local/bin/nendo $0 $*
 
+(use srfi-1)
+
 (define debug-print-length 1024)
 (define pp pretty-print)
 
@@ -22,7 +24,7 @@
                path1
                (if (File.exist? path2)
                    path2))))
-       '("xstow" "stow"))
+       '("xstow -f " "stow"))
       (if (< 0 (length lst))
           (car lst)
           (begin
@@ -249,35 +251,33 @@
 
 
 (define (get-linklist envs)
+  (define (pickup-projname path)
+    (cond
+     ((regex-match "/stow/([^/]+)" path)
+      => second)
+     (else
+      #f)))
+
   (let* ((bin-path (assq-ref 'bin envs))
          (lib-path (assq-ref 'lib envs))
-         (bin-list
+         (lst
           (append
            (map  (lambda (x) (+ bin-path "/" x))
                  (get-dir-entries bin-path))
            (map  (lambda (x) (+ lib-path "/" x))
                  (get-dir-entries lib-path)))))
-    (filter-map
-     (lambda (x)
-       (when (File.symlink? x)
-         (File.readlink x)))
-     bin-list)))
+    (delete-duplicates
+     (filter-map
+      (lambda (x)
+        (when (File.symlink? x)
+          (pickup-projname
+           (File.readlink x))))
+      lst))))
   
-
-;; check installed binary file by stow.
-(define (binary-installed? envs linklist projname)
-  (if (not projname)
-      false
-      ;; checking installed file counts.
-      (find
-       (lambda (x)
-         (regex-match (+ "[/]" projname "[/]") x))
-       linklist)))
-
 (define (get-stowed-list envs)
   (let* ((projs    (get-dir-entries (assq-ref 'stow-home envs)))
          (stowed   (get-dir-entries (assq-ref 'target envs)))
-         (all      (uniq (sort (append projs stowed))))
+         (all      (sort (delete-duplicates (append projs stowed))))
          (linklist (get-linklist envs))
          (cnt      0))
     (map
@@ -286,7 +286,7 @@
            (cons x
                  (list
                   (if (memv x stowed)
-                      (if (binary-installed? envs linklist x) 'i false)
+                      (if (memv x linklist) 'i false)
                       false)
                   (if (memv x stowed) 's false)
                   (if (memv x projs ) 'p false)

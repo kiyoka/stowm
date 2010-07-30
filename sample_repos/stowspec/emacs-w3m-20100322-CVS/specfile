@@ -1,14 +1,12 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(define-stowspec '(
- (conf . "if [ ! -e ./configure ] ; then
-  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
-  exit 1
-fi
-./configure --prefix=/usr/local/stow/emacs-w3m-20100322-CVS  --with-lispdir=/Applications/Emacs.app/Contents/Resources/site-lisp --with-emacs=/Applications/Emacs.app/Contents/MacOS/Emacs
-")
- (make . "make")
- (install . "make install")
- (arc . "emacs-w3m-20100322-CVS.tar.gz")
- (url)
- (projname . "emacs-w3m-20100322-CVS")
-))
+(let1 emacs-opt (if (eq? "Darwin" uname)
+                    "--with-emacs=/Applications/Emacs.app/Contents/MacOS/Emacs --with-lispdir=/Applications/Emacs.app/Contents/Resources/site-lisp"
+                    "--with-emacs=/usr/local/bin/emacs")
+      (define-stowspec `(
+                         (conf . ,(+ "./configure --prefix=/usr/local/stow/emacs-w3m-20100322-CVS " emacs-opt))
+                         (make . "make")
+                         (install . "make install")
+                         (arc . "emacs-w3m-20100322-CVS.tar.gz")
+                         (url)
+                         (projname . "emacs-w3m-20100322-CVS")
+                         )))
