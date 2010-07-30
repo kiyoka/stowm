@@ -1,0 +1,18 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+command='./configure --prefix=/usr/local/stow/emacs-24.0.50' 
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "emacs-24.0.50.tar.gz")
+ (url . nil)
+ (projname . "emacs-24.0.50")
+))
