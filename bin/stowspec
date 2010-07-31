@@ -1,6 +1,6 @@
 #!/bin/sh
 :; #-*- mode: nendo; syntax: scheme -*-;;
-:; exec /usr/local/bin/nendo $0 $*
+:; exec /usr/local/bin/nendo -O 0 $0 $*
 
 (use srfi-1)
 
@@ -11,6 +11,7 @@
 (define initfile-path   (File.expand_path "~/.stowspec"))
 (define stow-home       (File.expand_path "~/stowspec"))
 (define stow-target "/usr/local/stow")
+(define stow-local  "/usr/local")
 (define stow-bin    "/usr/local/bin")
 (define stow-lib    "/usr/local/lib")
 (define stow-temp   "/tmp/stowspec")
@@ -125,6 +126,7 @@
       (home        . ,(ENV.fetch "HOME"))   ;; "/home/xxxx/"
       (stow-home   . ,stow-home)            ;; "/home/xxxx/stowspec"
       (target      . ,stow-target)          ;; "/usr/local/stow"
+      (local       . ,stow-local)           ;; "/usr/local"
       (bin         . ,stow-bin)             ;; "/usr/local/bin"
       (lib         . ,stow-lib)             ;; "/usr/local/lib"
       (temp        . ,stow-temp)            ;; "/tmp/stowspec"
@@ -250,46 +252,61 @@
 ;;(get-dir-entries "/usr/local/stow")
 
 
-(define (get-linklist envs)
+(define (get-installed-files envs projname)
+  (with-open (+ (assq-ref 'target envs) "/." projname)
+             (lambda (f)
+               (cons
+                projname
+                (list
+                 (f.readline.chomp)
+                 (f.readline.chomp)
+                 (f.readline.chomp))))))
+  
+(define (check-stowed envs projname filelist)
   (define (pickup-projname path)
     (cond
      ((regex-match "/stow/([^/]+)" path)
       => second)
      (else
       #f)))
-
-  (let* ((bin-path (assq-ref 'bin envs))
-         (lib-path (assq-ref 'lib envs))
-         (lst
-          (append
-           (map  (lambda (x) (+ bin-path "/" x))
-                 (get-dir-entries bin-path))
-           (map  (lambda (x) (+ lib-path "/" x))
-                 (get-dir-entries lib-path)))))
-    (delete-duplicates
-     (filter-map
-      (lambda (x)
-        (when (File.symlink? x)
-          (pickup-projname
-           (File.readlink x))))
-      lst))))
   
+  (any
+   (lambda (x)
+     (let* ((local (assq-ref 'local envs))
+            (path1 (+ local "/" x))
+            (path2 (path1.sub (Regexp.new "[/][.][/]") "/")))
+       (and (File.symlink? path2)
+            (eq? projname
+                 (pickup-projname
+                     (File.readlink path2))))))
+   filelist))
+
+
 (define (get-stowed-list envs)
-  (let* ((projs    (get-dir-entries (assq-ref 'stow-home envs)))
-         (stowed   (get-dir-entries (assq-ref 'target envs)))
-         (all      (sort (delete-duplicates (append projs stowed))))
-         (linklist (get-linklist envs))
+  (let* ((projs       (get-dir-entries (assq-ref 'stow-home envs)))
+         (projs-hash  (apply hash-table
+                             (map (lambda (x) (cons x #t))
+                                  projs)))
+         (stowed      (get-dir-entries (assq-ref 'target envs)))
+         (stowed-hash (apply hash-table
+                             (map (lambda (x) (cons x #t))
+                                  stowed)))
+         (all        (sort (delete-duplicates (append projs stowed))))
+         (installed  (map
+                      (lambda (projname)
+                        (get-installed-files envs projname))
+                      stowed))
          (cnt      0))
     (map
      (lambda (x)
        (let1 result
            (cons x
                  (list
-                  (if (memv x stowed)
-                      (if (memv x linklist) 'i false)
+                  (if (hash-table-exist? stowed-hash x)
+                      (if (check-stowed envs x (assq-ref x installed)) 'i false)
                       false)
-                  (if (memv x stowed) 's false)
-                  (if (memv x projs ) 'p false)
+                  (if (hash-table-exist? stowed-hash x) 's false)
+                  (if (hash-table-exist? projs-hash  x) 'p false)
                   (get-project-basename x)
                   cnt))
          (begin
@@ -298,15 +315,18 @@
      all)))
 
 (when false
-  (get-stowed-list
-   '(
-     (pwd . "/Volumes/CaseSensitive/kiyoka/work/github/nendo/sample")
-     (home . "/Users/kiyoka")
-     (stow_home . "/Users/kiyoka/stowspec")
-     (target . "/usr/local/stow")
-     (bin . "/usr/local/bin")
-     (temp . "/tmp/stowspec")
-     (project))))
+  (pp
+   (get-stowed-list
+    '(
+      (pwd . "/Volumes/CaseSensitive/kiyoka/work/github/nendo/sample")
+      (home . "/Users/kiyoka")
+      (stow-home . "/Volumes/CaseSensitive/kiyoka/work/github/stowspec/sample_repos/stowspec")
+      (target . "/usr/local/stow")
+      (local . "/usr/local")
+      (bin . "/usr/local/bin")
+      (lib . "/usr/local/lib")
+      (temp . "/tmp/stowspec")
+      (project)))))
 
 
 (define (stowed-list-to-tree lst)
@@ -349,7 +369,7 @@
                                   (ox (third x))))
                        (cdr tree)))))
             (stowed-list-to-tree stowed-list))))))
-    
+
 
 
 (define (action-by-curdir envs)
