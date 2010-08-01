@@ -252,35 +252,34 @@
 ;;(get-dir-entries "/usr/local/stow")
 
 
-(define (get-installed-files envs projname)
-  (with-open (+ (assq-ref 'target envs) "/." projname)
-             (lambda (f)
-               (cons
-                projname
-                (list
-                 (f.readline.chomp)
-                 (f.readline.chomp)
-                 (f.readline.chomp))))))
-  
-(define (check-stowed envs projname filelist)
+(define (create-installed-alist local target)
   (define (pickup-projname path)
     (cond
      ((regex-match "/stow/([^/]+)" path)
       => second)
      (else
       #f)))
-  
-  (any
-   (lambda (x)
-     (let* ((local (assq-ref 'local envs))
-            (path1 (+ local "/" x))
-            (path2 (path1.sub (Regexp.new "[/][.][/]") "/")))
-       (and (File.symlink? path2)
-            (eq? projname
-                 (pickup-projname
-                     (File.readlink path2))))))
-   filelist))
 
+  (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowspec.cache\n" local target)
+    (exec-sh script)
+    (with-open "/tmp/stowspec.cache"
+               (lambda (f)
+                 (let* ((froms
+                         (map
+                          (lambda (line)
+                            (line.chomp))
+                          (f.readlines.to_list)))
+                        (link-alist
+                         (filter-map
+                          (lambda (fn)
+                            (let1 link (pickup-projname (File.readlink fn))
+                              (and link
+                                   (cons link fn))))
+                          froms)))
+                   (with-open (File.expand_path "~/.stowspec.installed")
+                              (lambda (f)
+                                (f.write (write-to-string link-alist)))
+                              "w"))))))
 
 (define (get-stowed-list envs)
   (let* ((projs       (get-dir-entries (assq-ref 'stow-home envs)))
@@ -291,11 +290,12 @@
          (stowed-hash (apply hash-table
                              (map (lambda (x) (cons x #t))
                                   stowed)))
-         (all        (sort (delete-duplicates (append projs stowed))))
-         (installed  (map
-                      (lambda (projname)
-                        (get-installed-files envs projname))
-                      stowed))
+         (all         (sort (delete-duplicates (append projs stowed))))
+         (_           (File.expand_path "~/.stowspec.installed"))
+         (installed-hash (if (File.exist? _)
+                             (with-open _ (lambda (f)
+                                            (alist->hash-table (read f))))
+                             (alist->hash-table '())))
          (cnt      0))
     (map
      (lambda (x)
@@ -303,7 +303,7 @@
            (cons x
                  (list
                   (if (hash-table-exist? stowed-hash x)
-                      (if (check-stowed envs x (assq-ref x installed)) 'i false)
+                      (if (hash-table-exist? installed-hash x) 'i false)
                       false)
                   (if (hash-table-exist? stowed-hash x) 's false)
                   (if (hash-table-exist? projs-hash  x) 'p false)
@@ -315,18 +315,17 @@
      all)))
 
 (when false
-  (pp
-   (get-stowed-list
-    '(
-      (pwd . "/Volumes/CaseSensitive/kiyoka/work/github/nendo/sample")
-      (home . "/Users/kiyoka")
-      (stow-home . "/Volumes/CaseSensitive/kiyoka/work/github/stowspec/sample_repos/stowspec")
-      (target . "/usr/local/stow")
-      (local . "/usr/local")
-      (bin . "/usr/local/bin")
-      (lib . "/usr/local/lib")
-      (temp . "/tmp/stowspec")
-      (project)))))
+  (create-installed-alist
+   '(
+     (pwd . "/Volumes/CaseSensitive/kiyoka/work/github/nendo/sample")
+     (home . "/Users/kiyoka")
+     (stow-home . "/Volumes/CaseSensitive/kiyoka/work/github/stowspec/sample_repos/stowspec")
+     (target . "/usr/local/stow")
+     (local . "/usr/local")
+     (bin . "/usr/local/bin")
+     (lib . "/usr/local/lib")
+     (temp . "/tmp/stowspec")
+     (project))))
 
 
 (define (stowed-list-to-tree lst)
@@ -439,8 +438,9 @@
         #f
         (not (ch.chr.match "[nN]")))))
 
+
 (define (action-by-keyword envs keyword number)
-  (define (do-restow target delete-item restow-item)
+  (define (do-restow local target delete-item restow-item)
     (let1 script (string-join
                   (list
                    (sprintf "cd %s" target)
@@ -452,8 +452,9 @@
                        (echo-str (sprintf "%s %s -R %s" (car stow-program) (cdr stow-program) (car restow-item))))
                    "")
                   "\n")
-      (exec-sh script)))
-  
+      (exec-sh script)
+      (create-installed-alist local target)))
+
   (let1 keywords '("enable" "disable")
     (when (not (memv keyword keywords))
       (printf "Error: usable keywords are (%s) " (string-join keywords " or "))
@@ -497,16 +498,16 @@
               (printf "Error: selected number [%d] was not installed yet. \n" number)
               (exit 1))
              (delete-action
-              (do-restow (assq-ref 'target envs) delete-item '()))
+              (do-restow (assq-ref 'local envs) (assq-ref 'target envs) delete-item '()))
              ((equal? delete-item restow-item)
               (printf "Info: force restow [%s] again? [Y/n]\n" (car restow-item))
               (if (yes-or-no?)
-                  (do-restow (assq-ref 'target envs) delete-item restow-item)
+                  (do-restow (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item)
                   (begin
                     (printf "Info: `restow -R' was canceled. \n" (car restow-item))
                     (exit 0))))
              (else
-              (do-restow (assq-ref 'target envs) delete-item restow-item))))))))
+              (do-restow (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))))))))
 
 
 (define (action-by-arg envs argv)
