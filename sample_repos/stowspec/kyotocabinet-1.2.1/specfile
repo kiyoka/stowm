@@ -1,0 +1,18 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+command='./configure --prefix=/usr/local/stow/kyotocabinet-1.2.1' 
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "kyotocabinet-1.2.1.tar.gz")
+ (url . "http://1978th.net/kyotocabinet/kyotocabinet-1.2.1.tar.gz")
+ (projname . "kyotocabinet-1.2.1")
+))
