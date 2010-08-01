@@ -1,16 +1,22 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(let1 emacs-bin (cond
-		 ((eq? "Darwin" uname)
-		  "/Applications/Emacs.app/Contents/MacOS/Emacs")
-		 (else
-		  "/usr/local/bin/emacs"))
-      (define-stowspec `(      
-			 (conf . "")
-			 (make .    ,(+ "make EMACS=" emacs-bin))
-			 (install . ,(+ "make install  EMACS=" emacs-bin))
-			 (arc . "apel-10.8.tar.gz")
-			 (url . "http://kanji.zinbun.kyoto-u.ac.jp/~tomo/lemi/dist/apel/apel-10.8.tar.gz")
-			 (projname . "apel-10.8"))))
+(let ((emacs-bin (cond
+                  ((eq? "Darwin" uname)
+                   "/Applications/Emacs.app/Contents/MacOS/Emacs")
+                  (else
+                   "/usr/local/bin/emacs")))
+      (prefix    (cond
+                  ((eq? "Darwin" uname)
+                   "")
+                  (else
+                   "PREFIX=/usr/local/stow/apel-10.8/"))))
+  (define-stowspec `(      
+                     (conf . "")
+                     (make .    ,(+ "make EMACS=" emacs-bin " " prefix))
+                     (install . ,(+ "make install  EMACS=" emacs-bin " " prefix))
+                     (arc . "apel-10.8.tar.gz")
+                     (url . "http://kanji.zinbun.kyoto-u.ac.jp/~tomo/lemi/dist/apel/apel-10.8.tar.gz")
+                     (projname . "apel-10.8"))))
+
 
 
 
