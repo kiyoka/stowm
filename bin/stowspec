@@ -3,10 +3,9 @@
 :; exec /usr/local/bin/nendo -O 0 $0 $*
 
 (use srfi-1)
+(require "digest/sha1")
 
 (define debug-print-length 1024)
-(define pp pretty-print)
-
 (define archive-file-pattern "([a-zA-Z].*)")
 (define initfile-path   (File.expand_path "~/.stowspec"))
 (define stow-home       (File.expand_path "~/stowspec"))
@@ -29,7 +28,7 @@
     (if (< 0 (length lst))
         (car lst)
         (begin
-          (STDERR.puts "Error: not found the stow program. (or xstow) ")
+          (STDERR.puts "Error: not found the (stow or xstow) program binary.")
           (exit 1)))))
 
 ;; `regex' is a string ( not a regex object )
@@ -56,10 +55,8 @@
   (print ""))
 
 
-(require "digest/md5")
-
 (define (exec-sh script)
-  (let* ((digest (Digest::MD5.hexdigest script))
+  (let* ((digest (Digest::SHA1.hexdigest script))
          (tmpfile (sprintf "/tmp/stowspec_script.%s.sh" digest)))
     (with-open
      tmpfile
