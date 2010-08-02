@@ -7,8 +7,9 @@
 
 (define debug-print-length 1024)
 (define archive-file-pattern "([a-zA-Z].*)")
-(define initfile-path   (File.expand_path "~/.stowspec"))
-(define stow-home       (File.expand_path "~/stowspec"))
+(define initfile-path       (File.expand_path "~/.stowspec"))
+(define stowspec-db-path    (File.expand_path "~/.stowspec.db"))
+(define stow-home           (File.expand_path "~/stowspec"))
 (define stow-target "/usr/local/stow")
 (define stow-local  "/usr/local")
 (define stow-bin    "/usr/local/bin")
@@ -273,7 +274,7 @@
                               (and link
                                    (cons link fn))))
                           froms)))
-                   (with-open (File.expand_path "~/.stowspec.installed")
+                   (with-open stowspec-db-path
                               (lambda (f)
                                 (f.write (write-to-string link-alist)))
                               "w"))))))
@@ -288,28 +289,23 @@
                              (map (lambda (x) (cons x #t))
                                   stowed)))
          (all         (sort (delete-duplicates (append projs stowed))))
-         (_           (File.expand_path "~/.stowspec.installed"))
-         (installed-hash (if (File.exist? _)
-                             (with-open _ (lambda (f)
-                                            (alist->hash-table (read f))))
-                             (alist->hash-table '())))
-         (cnt      0))
+         (installed-hash (if (File.exist? stowspec-db-path)
+                             (with-open stowspec-db-path (lambda (f)
+                                                           (alist->hash-table (read f))))
+                             (alist->hash-table '()))))
     (map
-     (lambda (x)
-       (let1 result
-           (cons x
-                 (list
-                  (if (hash-table-exist? stowed-hash x)
-                      (if (hash-table-exist? installed-hash x) 'i false)
-                      false)
-                  (if (hash-table-exist? stowed-hash x) 's false)
-                  (if (hash-table-exist? projs-hash  x) 'p false)
-                  (get-project-basename x)
-                  cnt))
-         (begin
-           (set! cnt (+ cnt 1))
-           result)))
-     all)))
+     (lambda (x cnt)
+       (cons x
+             (list
+              (if (hash-table-exist? stowed-hash x)
+                  (if (hash-table-exist? installed-hash x) 'i false)
+                  false)
+              (if (hash-table-exist? stowed-hash x) 's false)
+              (if (hash-table-exist? projs-hash  x) 'p false)
+              (get-project-basename x)
+              cnt)))
+     all
+     (range (length all)))))
 
 (when false
   (create-installed-alist
