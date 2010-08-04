@@ -32,17 +32,25 @@
           (STDERR.puts "Error: not found the (stow or xstow) program binary.")
           (exit 1)))))
 
-;; `regex' is a string ( not a regex object )
-;; returns ( $0-string  $1-string  $2-string  $3-string ... )
+
+;; `regex' is a string or Regexp class.
+;;   returns ( $0-string  $1-string  $2-string  $3-string ... )
 (define (regex-match regex str)
-  (let1 matchdata (str.match regex)
-    (if matchdata
-        (matchdata.to_a.to_list)
-        nil)))
+  (let1 regex (if (regexp? regex)
+                  regex
+                  (string->regexp regex))
+    (let1 matchdata (rxmatch regex str)
+      (if matchdata
+          (matchdata.to_a.to_list)
+          #f))))
 
 ;; test
-;;(regex-match "^[a-z]+$" "abc")
-;;(regex-match "^([a-z]+)([0-9]+)$" "abc123")
+(when #f
+  (list
+   (regex-match "^[a-z]+$" "abc")
+   (regex-match "^([a-z]+)([0-9]+)$" "abc123")
+   (regex-match #/^[a-z]+$/ "abc")
+   (regex-match #/^([a-z]+)([0-9]+)$/ "abc123")))
 
 
 (define (display-help)
@@ -77,10 +85,10 @@
    ((regex-match (+ "^"   archive-file-pattern "(.tar.gz|.tgz|.tar.bz2)$") tgz)
     => second)
    (else
-    nil)))
+    #f)))
 
 ;; test
-(when false
+(when #f
   (list
    (tgz-to-name "abc-1.2.3.tar.gz")
    (tgz-to-name "abc-1.2.3.tar.bz2")
@@ -92,13 +100,13 @@
 
 (define (get-project-basename name-and-ver)
   (cond
-   ((regex-match (+ "^([A-Za-z0-9_-]+)[_-][0-9]+") name-and-ver)
+   ((regex-match #/^([A-Za-z0-9_-]+)[_-][0-9]+/ name-and-ver)
     => second)
    (else
     "???")))
 
 ;; test
-(when false
+(when #f
   (list
    (get-project-basename "abc-1.2.3.tar.gz")
    (get-project-basename "abc-1.2.3.tar.bz2")
@@ -118,7 +126,7 @@
            ((regex-match (+ "^" stow-home "/" archive-file-pattern "$") pwd)
             => second)
            (else
-            nil))))
+            #f))))
     `(
       (pwd         . ,pwd)                  ;; pwd
       (home        . ,(ENV.fetch "HOME"))   ;; "/home/xxxx/"
