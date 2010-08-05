@@ -56,8 +56,8 @@
 (define (display-help)
   (print "")
   (print "Usage: ")
-  (print "  1. stowspec [enable] number      ... enable  program. (rewtow -R)")
-  (print "  2. stowspec disable  number      ... disable program. (rewtow -D)")
+  (print "  1. stowspec  number              ... enable  program. (rewtow -R)")
+  (print "  2. stowspec -number              ... disable program. (rewtow -D)")
   (print "  3. stowspec [URL of tar.gz]      ... fetch, setup specfile, build program.")
   (print "  4. stowspec tar.gz               ... setup specfile, build program.")
   (print "  5. stowspec                      ... list up installed program list.")
@@ -603,10 +603,12 @@
        (action-by-curdir envs))
       (else
        (cond
-        ((regex-match "^[a-zA-Z]+$" (car argv))
+        ((regex-match #/^[a-zA-Z]+$/ (car argv))
          (action-by-keyword envs (car argv) (to-i (cadr argv))))
-        ((regex-match "^[0-9]+$"    (car argv))
-         (action-by-keyword envs "enable" (to-i (car argv))))
+        ((regex-match #/^[0-9]+$/    (car argv))
+         (action-by-keyword envs "enable"   (to-i (car argv))))
+        ((regex-match #/^[-][0-9]+$/ (car argv))
+         (action-by-keyword envs "disable"  (abs (to-i (car argv)))))
         (else
          (action-by-arg    envs argv)))))))
 
