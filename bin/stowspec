@@ -75,7 +75,8 @@
     (printf "---BEGIN---(%s)\n" tmpfile)
     (.system (+ "bash " tmpfile))
     (print "---END---")
-    (File.delete tmpfile)))
+    (File.delete tmpfile)
+    ))
 
 
 (define (tgz-to-name tgz)
@@ -176,7 +177,7 @@
   (string-join
    (list
     (sprintf "echo \" \" ============================================================")
-    (sprintf "echo \" \" [[ %s ]]\n %s" str str)
+    (sprintf "echo \" \" ' [[ %s ]] '\n %s" str str)
     (sprintf "echo \" \" ============================================================"))
    "\n"))
 (define (pass-str str) str)
