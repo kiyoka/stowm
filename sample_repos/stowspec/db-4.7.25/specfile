@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+                   (conf . "cd ./build_unix ; ../dist/configure --prefix=/usr/local/stow/db-4.7.25")
+                   (make . "make")
+                   (install . "make install")
+                   (arc . "db-4.7.25.tar.gz")
+                   (url . "http://download.oracle.com/berkeley-db/db-4.7.25.tar.gz")
+                   (projname . "db-4.7.25")
+                   ))
