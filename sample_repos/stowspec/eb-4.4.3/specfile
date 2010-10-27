@@ -1,4 +1,7 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
+;;
+;;  Mac OS X slow leopard のインストール済みlibiconvでないとビルドできなかった。
+;;
 (define-stowspec '(
  (conf . "if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
