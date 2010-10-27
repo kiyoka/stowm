@@ -1,0 +1,18 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+command='./configure --prefix=/usr/local/stow/eblook-1.6.1 --with-eb-conf=/usr/local/etc/eb.conf'
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "eblook-1.6.1.tar.gz")
+ (url . "http://openlab.ring.gr.jp/edict/eblook/dist/eblook-1.6.1.tar.gz")
+ (projname . "eblook-1.6.1")
+))
