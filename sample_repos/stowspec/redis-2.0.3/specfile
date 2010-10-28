@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "")
+ (make . "make")
+ (install . "make INSTALL_TOP=/usr/local/stow/redis-2.0.3 install ")
+ (arc . "redis-2.0.3.tar.gz")
+ (url . nil)
+ (projname . "redis-2.0.3")
+))
