@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/ruby-1.9.1-p429' 
+command='./configure --prefix=/usr/local/stow/ruby-1.9.1-p429 --with-opt-dir=/usr/local'
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
