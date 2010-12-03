@@ -1,0 +1,4 @@
+(define stow-home       "/Volumes/CaseSensitive/kiyoka/work/github/stowspec/sample_repos/stowspec")
+(print  "Loaded ~/.stowspec")
+(print  " gnu site : http://core.ring.gr.jp/pub/GNU/")
+
