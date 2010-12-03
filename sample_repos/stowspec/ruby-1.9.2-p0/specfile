@@ -1,10 +1,13 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
+;;
+;;   You must install libiconv to "/usr/local" path before ruby-1.9.2-p0 .
+;;
 (define-stowspec '(
  (conf . "if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/ruby-1.9.2-p0 --with-opt-dir=/usr/local' 
+command='./configure --prefix=/usr/local/stow/ruby-1.9.2-p0  --with-iconv-dir=/usr/local' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
