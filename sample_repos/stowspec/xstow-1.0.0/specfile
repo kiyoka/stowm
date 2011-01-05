@@ -1,0 +1,14 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+./configure --prefix=/usr/local/stow/xstow-1.0.0 --disable-static
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "xstow-1.0.0.tar.bz2")
+ (url)
+ (projname . "xstow-1.0.0")
+))
