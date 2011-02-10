@@ -1,10 +1,11 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
+;; on Debian lenny, You need install libboost-dev.
 (define-stowspec '(
  (conf . "if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/redis-2.0.1' 
+command='./configure --prefix=/usr/local/stow/flare-1.0.11' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
@@ -12,7 +13,7 @@ ${command}
 ")
  (make . "make")
  (install . "make install")
- (arc . "redis-2.0.1.tar.gz")
- (url . nil)
- (projname . "redis-2.0.1")
+ (arc . "flare-1.0.11.tgz")
+ (url . "http://labs.gree.jp/data/source/flare-1.0.11.tgz")
+ (projname . "flare-1.0.11")
 ))

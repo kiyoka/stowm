@@ -1,4 +1,5 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
+;; for debian lenny , libbz2-dev packages is required.
 (define-stowspec '(
  (conf . "if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
