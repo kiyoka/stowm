@@ -1,0 +1,12 @@
+diff -Naur chibi-scheme-0.3/Makefile chibi-scheme-0.3.modify/Makefile
+--- chibi-scheme-0.3/Makefile	2009-12-29 15:30:46.000000000 +0900
++++ chibi-scheme-0.3.modify/Makefile	2011-03-21 13:55:18.000000000 +0900
+@@ -6,7 +6,7 @@
+ # install configuration
+ 
+ CC       ?= cc
+-PREFIX   ?= /usr/local
++PREFIX   ?= /usr/local/stow/chibi-scheme-0.3
+ BINDIR   ?= $(PREFIX)/bin
+ LIBDIR   ?= $(PREFIX)/lib
+ SOLIBDIR ?= $(PREFIX)/lib
