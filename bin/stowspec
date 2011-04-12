@@ -3,9 +3,18 @@
 :; exec /usr/local/bin/nendo $0 $*
 
 (use srfi-1)
+(cond
+ ((= *nendo-version* "0.5.0")
+  (use util.list))
+ ((= *nendo-version* "0.4.1")
+  (define original-hash-table hash-table)
+  (define (hash-table type . kv-list)
+    (apply original-hash-table kv-list)))
+ (else
+  (errorf "Error: stowspec doesn't support nendo version %s" *nendo-version*)))
+
 (require "digest/sha1")
 
-(define debug-print-length 1024)
 (define archive-file-pattern "([a-zA-Z].*)")
 (define initfile-path       (File.expand_path "~/.stowspec"))
 (define stowspec-db-path    (File.expand_path "~/.stowspec.db"))
@@ -290,11 +299,11 @@
 
 (define (get-stowed-list envs)
   (let* ((projs       (get-dir-entries (assq-ref 'stow-home envs)))
-         (projs-hash  (apply hash-table
+         (projs-hash  (apply hash-table eq?
                              (map (lambda (x) (cons x #t))
                                   projs)))
          (stowed      (get-dir-entries (assq-ref 'target envs)))
-         (stowed-hash (apply hash-table
+         (stowed-hash (apply hash-table eq?
                              (map (lambda (x) (cons x #t))
                                   stowed)))
          (all         (sort (delete-duplicates (append projs stowed))))
