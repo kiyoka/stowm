@@ -1,0 +1,12 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+                   (conf . "")
+                   (make . "")
+                   (install . "cd ..
+/bin/rm -rf /usr/local/stow/llvm-gcc-4.2-2.9-i686-linux
+/bin/cp -r llvm-gcc-4.2-2.9-i686-linux /usr/local/stow
+")
+                   (arc . "llvm-gcc-4.2-2.9-i686-linux.tgz")
+                   (url . "http://llvm.org/releases/2.9/llvm-gcc-4.2-2.9-i686-linux.tgz")
+                   (projname . "llvm-gcc-4.2-2.9-i686-linux")
+ ))

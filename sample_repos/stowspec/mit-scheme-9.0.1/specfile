@@ -1,12 +1,10 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
 (define-stowspec '(
- (conf . "
-export CC=clang ; export CXX=clang++ ;
-if [ ! -e ./configure ] ; then
+ (conf . "if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/emacs-23.3' 
+command='./configure --prefix=/usr/local/stow/mit-scheme-9.0.1' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
@@ -14,7 +12,7 @@ ${command}
 ")
  (make . "make")
  (install . "make install")
- (arc . "emacs-23.3.tar.gz")
- (url . "http://core.ring.gr.jp/pub/GNU/emacs/emacs-23.3.tar.gz")
- (projname . "emacs-23.3")
+ (arc . "mit-scheme-9.0.1.tar.gz")
+ (url . "http://ftp.gnu.org/gnu/mit-scheme/stable.pkg/9.0.1/mit-scheme-9.0.1.tar.gz")
+ (projname . "mit-scheme-9.0.1")
 ))
