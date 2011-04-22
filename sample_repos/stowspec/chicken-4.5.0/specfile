@@ -1,8 +1,8 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
 (define-stowspec '(
  (conf . "")
- (make . "make PLATFORM=macosx PREFIX=/usr/local/stow/chicken-4.5.0")
- (install . "make install")
+ (make . "make PLATFORM=macosx DESTDIR=/usr/local/stow/chicken-4.5.0")
+ (install . "make PLATFORM=macosx install")
  (arc . "chicken-4.5.0.tar.gz")
  (url . "http://chicken.wiki.br/releases/4.5.0/chicken-4.5.0.tar.gz")
  (projname . "chicken-4.5.0")
