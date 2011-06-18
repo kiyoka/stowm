@@ -6,6 +6,8 @@
 (cond
  ((= *nendo-version* "0.5.0")
   (use util.list))
+ ((= *nendo-version* "0.5.1")
+  (use util.list))
  ((= *nendo-version* "0.4.1")
   (define original-hash-table hash-table)
   (define (hash-table type . kv-list)
@@ -160,9 +162,11 @@
       `(other . "")))))
 
 
-(define assoc-to-local
-  (macro (_assoc name)
-    `(,name (assq-ref (quote ,name) ,_assoc))))
+(define let1-assoc
+  (macro (name _assoc body)
+    `(let1 ,name (assq-ref (quote ,name) ,_assoc)
+       ,body)))
+         
 
 ;; test
 (when false
@@ -171,16 +175,16 @@
                (url      . nil))
     (pretty-print
      (macroexpand
-      '(let
-           (
-            (assoc-to-local _aaa filename)
-            (assoc-to-local _aaa projname)))))
-    (let
-        (
-         (assoc-to-local _aaa filename)
-         (assoc-to-local _aaa projname))
-      (+ filename ":" projname))))
-      
+      '(let1-assoc filename _aaa
+         (let1-assoc projname _aaa
+            (cons filename projname)))))
+
+    (print
+     (let1-assoc filename _aaa
+       (let1-assoc projname _aaa
+         (+ filename ":" projname))))
+    (exit 0)))
+
 
 (define (echo-str str)
   (string-join
@@ -193,15 +197,15 @@
 
 (define (gen-script envs project-envs spec)
 
-  (let* ((_ (append envs project-envs))
-         (assoc-to-local _ projname)
-         (assoc-to-local _ projpath)
-         (assoc-to-local _ arc)
-         (assoc-to-local _ workdir)
-         (assoc-to-local _ url)
-         (url (if (null? url)
-                  #f
-                  url)))
+  (let1 _ (append envs project-envs)
+    (let1-assoc projname _
+      (let1-assoc projpath _
+        (let1-assoc arc      _
+          (let1-assoc workdir  _
+            (let1-assoc url      _
+              (let1 url (if (null? url)
+                            #f
+                            url)))))))
     (begin
       `(
         (store . ,(string-join
@@ -409,19 +413,19 @@
       ;; ----------
 
       (let* ((spec (load-specfile envs))
-             (_ (append envs spec))
-             (assoc-to-local _ target)
-             (assoc-to-local _ projname))
-        ;; ----------
-        ;; build!
-        ;; ----------
-        (if (not (File.exist? (+ target "/" projname)))
-            (do-build envs spec)
-            (begin
-              (printf "Warning: [%s] was already built and installed. rebuild? [Y/n]\n" projname)
-              (if (yes-or-no?)
-                  (do-build envs spec)
-                  (printf "Info: build [%s] was canceled. \n" projname))))))
+             (_ (append envs spec)))
+        (let1-assoc target _
+          (let1-assoc projname _
+                      ;; ----------
+                      ;; build!
+                      ;; ----------
+                      (if (not (File.exist? (+ target "/" projname)))
+                          (do-build envs spec)
+                          (begin
+                            (printf "Warning: [%s] was already built and installed. rebuild? [Y/n]\n" projname)
+                            (if (yes-or-no?)
+                                (do-build envs spec)
+                                (printf "Info: build [%s] was canceled. \n" projname))))))))
      (else
       ;; ----------
       ;; show current stowed status
@@ -532,53 +536,53 @@
       (display-help)
       (exit 1))
     (let* ((projname (or (tgz-to-name arc) ""))
-           (project-envs (get-project-envs envs projname arc url))
-           (assoc-to-local project-envs workdir)
-           (assoc-to-local project-envs specfile)
-           (assoc-to-local project-envs projpath))
-      (if (or url arc)
-          (begin
-            (printf "url      = %s\n" url)
-            (printf "arc      = %s\n" arc)
-            (printf "projname = %s\n" projname)
-            (printf "workdir  = %s\n" workdir)
-            (printf "specfile = %s\n" specfile)
-            (let* ((scripts  (gen-script envs project-envs '())))
-              (exec-sh (assq-ref 'store scripts))
-              (printf "Info: specfile = %s\n" specfile)
-              (printf "cd %s\n" projpath)
-              (with-open specfile
-                         (lambda (f)
-                           (f.puts ";;-*- mode: scheme; syntax: scheme -*-;;")
-                           (f.puts "(define-stowspec '(")
-                           (for-each
-                            (lambda (x)
-                              (f.puts (+ " " (write-to-string x))))
-                            `((conf      .
-                                         ,(string-join
-                                           (list
-                                            "if [ ! -e ./configure ] ; then"
-                                            "  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'"
-                                            "  exit 1"
-                                            "fi"
-                                            (sprintf "command='./configure --prefix=%s/%s' " (assq-ref 'target envs) projname)
-                                            (sprintf "echo \" \" ============================================================")
-                                            (sprintf "echo \" \" [[ ${command} ]]")
-                                            (sprintf "echo \" \" ============================================================")
-                                            "${command}"
-                                            "")
-                                           "\n"))
-                              (make      . "make")
-                              (install   . "make install")
-                              (arc       . ,arc)
-                              (url       . ,url)
-                              (projname  . ,projname)))
-                           (f.puts "))"))
-                         "w")
-              (exec-sh (assq-ref 'stowspec scripts))))
-          (begin
-            (print "Error: please specify url by argument.")
-            (exit 1))))))
+           (project-envs (get-project-envs envs projname arc url)))
+      (let1-assoc workdir project-envs
+        (let1-assoc specfile project-envs
+          (let1-assoc projpath project-envs
+            (if (or url arc)
+                (begin
+                  (printf "url      = %s\n" url)
+                  (printf "arc      = %s\n" arc)
+                  (printf "projname = %s\n" projname)
+                  (printf "workdir  = %s\n" workdir)
+                  (printf "specfile = %s\n" specfile)
+                  (let* ((scripts  (gen-script envs project-envs '())))
+                    (exec-sh (assq-ref 'store scripts))
+                    (printf "Info: specfile = %s\n" specfile)
+                    (printf "cd %s\n" projpath)
+                    (with-open specfile
+                               (lambda (f)
+                                 (f.puts ";;-*- mode: scheme; syntax: scheme -*-;;")
+                                 (f.puts "(define-stowspec '(")
+                                 (for-each
+                                  (lambda (x)
+                                    (f.puts (+ " " (write-to-string x))))
+                                  `((conf      .
+                                               ,(string-join
+                                                 (list
+                                                  "if [ ! -e ./configure ] ; then"
+                                                  "  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'"
+                                                  "  exit 1"
+                                                  "fi"
+                                                  (sprintf "command='./configure --prefix=%s/%s' " (assq-ref 'target envs) projname)
+                                                  (sprintf "echo \" \" ============================================================")
+                                                  (sprintf "echo \" \" [[ ${command} ]]")
+                                                  (sprintf "echo \" \" ============================================================")
+                                                  "${command}"
+                                                  "")
+                                                 "\n"))
+                                    (make      . "make")
+                                    (install   . "make install")
+                                    (arc       . ,arc)
+                                    (url       . ,url)
+                                    (projname  . ,projname)))
+                                 (f.puts "))"))
+                               "w")
+                    (exec-sh (assq-ref 'stowspec scripts))))
+                (begin
+                  (print "Error: please specify url by argument.")
+                  (exit 1)))))))))
           
 ;; test
 ;;(action-by-arg '("a.tar.gz"))
