@@ -201,64 +201,64 @@
     (let1-assoc projname _
       (let1-assoc projpath _
         (let1-assoc arc      _
-          (let1-assoc workdir  _
-            (let1-assoc url      _
-              (let1 url (if (null? url)
-                            #f
-                            url)))))))
-    (begin
-      `(
-        (store . ,(string-join
-                   (list
-                    (sprintf "mkdir -p %s" projpath)
-                    (if url
-                        (echo-str (sprintf "wget -O %s/%s %s"      projpath arc url))
-                        (pass-str (sprintf "/bin/cp %s %s"         arc projpath)))
-                    (sprintf "cd %s" projpath)
-                    "")
-                   "\n"))
-        (build . ,(string-join
-                   (append
-                    (if (not (File.exist? (+ "./" arc)))
-                        (if url
-                            (list
-                             (pass-str (sprintf "echo file [%s] was not found, so, I fetch it again." arc url))
-                             (echo-str (sprintf "wget -O ./%s %s" arc url)))
-                            (list
-                             (pass-str (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc))
-                             (echo-str (sprintf "/bin/cp ~/Downloads/%s ." arc))))
-                        '())
-                    (list
-                     (sprintf "if [ ! -e \"./%s\" ] ; then " arc)
-                     (sprintf "  echo file [%s] was not found." arc)
-                     (sprintf "  exit 1 ")
-                     (sprintf "fi")
-                     (sprintf "export TMPDIR=/tmp")
-                     (sprintf "/bin/rm -rf %s/%s" workdir projname)
-                     (sprintf "mkdir -p %s" workdir)
-                     (sprintf "/bin/cp -f %s %s" arc workdir)
-                     (sprintf "if [ ! -z \"`ls -1 | grep .patch`\" ] ; then")
-                     (sprintf "  /bin/cp -f *.patch %s" workdir)
-                     (sprintf "fi")
-                     (sprintf "cd %s" workdir)
-                     (sprintf "tar zxf %s" arc)
-                     (sprintf "for i in `ls -1 | grep .patch` ;")
-                     (sprintf "do")
-                     (echo-str (sprintf "  patch -p 0 -i ${i}"))
-                     (sprintf "done")
-                     (sprintf "cd ./%s"    projname)
-                     (assq-ref 'conf       spec)
-                     (echo-str (assq-ref 'make       spec))
-                     (echo-str (assq-ref 'install    spec))
-                     ""))
-                   "\n"))
-        (stowspec . ,(string-join
-                      (list
-                       (sprintf "cd %s" projpath)
-                       "stowspec"
-                       "")
-                      "\n"))
-        ))))
+         (let1-assoc workdir  _
+           (let1-assoc url      _
+             (let1 url (if (null? url)
+                           #f
+                           url)
+               (begin
+                 `(
+                   (store . ,(string-join
+                              (list
+                               (sprintf "mkdir -p %s" projpath)
+                               (if url
+                                   (echo-str (sprintf "wget -O %s/%s %s"      projpath arc url))
+                                   (pass-str (sprintf "/bin/cp %s %s"         arc projpath)))
+                               (sprintf "cd %s" projpath)
+                               "")
+                              "\n"))
+                   (build . ,(string-join
+                              (append
+                               (if (not (File.exist? (+ "./" arc)))
+                                   (if url
+                                       (list
+                                        (pass-str (sprintf "echo file [%s] was not found, so, I fetch it again." arc url))
+                                        (echo-str (sprintf "wget -O ./%s %s" arc url)))
+                                       (list
+                                        (pass-str (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc))
+                                        (echo-str (sprintf "/bin/cp ~/Downloads/%s ." arc))))
+                                   '())
+                               (list
+                                (sprintf "if [ ! -e \"./%s\" ] ; then " arc)
+                                (sprintf "  echo file [%s] was not found." arc)
+                                (sprintf "  exit 1 ")
+                                (sprintf "fi")
+                                (sprintf "export TMPDIR=/tmp")
+                                (sprintf "/bin/rm -rf %s/%s" workdir projname)
+                                (sprintf "mkdir -p %s" workdir)
+                                (sprintf "/bin/cp -f %s %s" arc workdir)
+                                (sprintf "if [ ! -z \"`ls -1 | grep .patch`\" ] ; then")
+                                (sprintf "  /bin/cp -f *.patch %s" workdir)
+                                (sprintf "fi")
+                                (sprintf "cd %s" workdir)
+                                (sprintf "tar zxf %s" arc)
+                                (sprintf "for i in `ls -1 | grep .patch` ;")
+                                (sprintf "do")
+                                (echo-str (sprintf "  patch -p 0 -i ${i}"))
+                                (sprintf "done")
+                                (sprintf "cd ./%s"    projname)
+                                (assq-ref 'conf       spec)
+                                (echo-str (assq-ref 'make       spec))
+                                (echo-str (assq-ref 'install    spec))
+                                ""))
+                              "\n"))
+                   (stowspec . ,(string-join
+                                 (list
+                                  (sprintf "cd %s" projpath)
+                                  "stowspec"
+                                  "")
+                                 "\n"))
+                   ))))))))))
 
 
 (define (get-dir-entries path)
