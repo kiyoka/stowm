@@ -1,0 +1,18 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+command='./configure --prefix=/usr/local/stow/xz-5.0.3' 
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "xz-5.0.3.tar.gz")
+ (url . "http://tukaani.org/xz/xz-5.0.3.tar.gz")
+ (projname . "xz-5.0.3")
+))
