@@ -4,9 +4,7 @@
 
 (use srfi-1)
 (cond
- ((= *nendo-version* "0.5.0")
-  (use util.list))
- ((= *nendo-version* "0.5.1")
+ ((rxmatch #/0.5.[0-9]/ *nendo-version*)
   (use util.list))
  ((= *nendo-version* "0.4.1")
   (define original-hash-table hash-table)
