@@ -14,6 +14,6 @@ fi
  (make . "make")
  (install . "make install")
  (arc . "ImageMagick-6.6.2-7.tar.gz")
- (url)
+ (url . "http://image_magick.veidrodis.com/image_magick/ImageMagick-6.6.2-7.tar.gz")
  (projname . "ImageMagick-6.6.2-7")
 ))
