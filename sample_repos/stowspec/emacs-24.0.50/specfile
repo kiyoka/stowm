@@ -12,7 +12,7 @@
 ;;
 (define-stowspec '(
  (conf . "
-export CC=clang ; export CXX=clang++ ;
+#export CC=clang ; export CXX=clang++ ;
 if [ ! -e ./configure ] ; then
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
