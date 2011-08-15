@@ -513,12 +513,8 @@
              (delete-action
               (do-restow (assq-ref 'local envs) (assq-ref 'target envs) delete-item '()))
              ((equal? delete-item restow-item)
-              (printf "Info: force restow [%s] again? [Y/n]\n" (car restow-item))
-              (if (yes-or-no?)
-                  (do-restow (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item)
-                  (begin
-                    (printf "Info: `restow -R' was canceled. \n" (car restow-item))
-                    (exit 0))))
+              (printf "Info: restow [%s] again.\n" (car restow-item))
+              (do-restow (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))
              (else
               (do-restow (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))))))))
 
