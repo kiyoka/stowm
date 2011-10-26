@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/emacs-23.3' 
+command='./configure --prefix=/usr/local/stow/emacs-24.0.90' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
@@ -12,7 +12,7 @@ ${command}
 ")
  (make . "make")
  (install . "make install")
- (arc . "emacs-23.3.tar.gz")
- (url . nil)
- (projname . "emacs-23.3")
+ (arc . "emacs-24.0.90.tar.gz")
+ (url . "http://alpha.gnu.org/gnu/emacs/pretest/emacs-24.0.90.tar.gz")
+ (projname . "emacs-24.0.90")
 ))

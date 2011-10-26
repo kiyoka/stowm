@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/emacs-23.3' 
+command='./configure --prefix=/usr/local/stow/ruby-1.9.3-rc1' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
@@ -12,7 +12,7 @@ ${command}
 ")
  (make . "make")
  (install . "make install")
- (arc . "emacs-23.3.tar.gz")
- (url . nil)
- (projname . "emacs-23.3")
+ (arc . "ruby-1.9.3-rc1.tar.gz")
+ (url . "http://ftp.ruby-lang.org/pub/ruby/1.9/ruby-1.9.3-rc1.tar.gz")
+ (projname . "ruby-1.9.3-rc1")
 ))
