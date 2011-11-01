@@ -1,4 +1,6 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
+;;
+;;  Please copy /etc/init.d/mongodb and /etc/mongodg.conf files by hand.
 (define-stowspec '(
  (conf . "")
  (make . "")
