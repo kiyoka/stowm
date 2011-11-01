@@ -47,7 +47,7 @@
 ### END INIT INFO
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/mongod
+DAEMON=/usr/local/bin/mongod
 DESC=database
 
 # Default defaults.  Can be overridden by the /etc/default/$NAME
