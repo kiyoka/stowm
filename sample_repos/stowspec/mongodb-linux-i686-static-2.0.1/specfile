@@ -1,0 +1,22 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+;;
+;;  Please copy /etc/init.d/mongodb and /etc/mongodg.conf files by hand.
+;;
+;;    and then
+;;
+;;  adduser mongodb
+;;  mkdir -p /var/lib/mongodb && chown mongodb /var/lib/mongodb
+;;  mkdir -p /var/log/mongodb && chown mongodb /var/log/mongodb
+;;
+(define-stowspec '(
+ (conf . "")
+ (make . "")
+ (install . "
+/bin/rm -rf /usr/local/stow/mongodb-linux-i686-static-2.0.1
+/bin/cp -r ../mongodb-linux-i686-static-2.0.1 /usr/local/stow
+"
+          )
+ (arc . "mongodb-linux-i686-static-2.0.1.tgz")
+ (url . "http://fastdl.mongodb.org/linux/mongodb-linux-i686-static-2.0.1.tgz")
+ (projname . "mongodb-linux-i686-static-2.0.1")
+))
