@@ -4,7 +4,7 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/w3m-0.5.3' 
+command='./configure --prefix=/usr/local/stow/w3m-0.5.3 --enable-image=no ' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
