@@ -1,9 +1,0 @@
-;;-*- mode: scheme; syntax: scheme -*-;;
-(define-stowspec '(
- (conf . "")
- (make . "make")
- (install . "make install")
- (arc . "ypsilon-0.9.6.update3.tar.gz")
- (url)
- (projname . "ypsilon-0.9.6.update3")
-))
