@@ -1,0 +1,35 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+
+;;./configure --prefix=/usr/local/stow/ruby-static-1.9.3-p194 --with-static-linked-ext
+;;
+;;http://stackoverflow.com/questions/4156055/gcc-static-linking-only-some-libraries
+;;      gcc ... -static ... tries to statically link all the linked libraries, but I haven't got the static version of some of them (eg: libX11).
+;;
+;;
+;;export CFLAGS=-fPIC
+;;  export CFLAGS='-static -fPIE -fPIC'
+;;  export LDFLAGS='-static -pie'
+;;     CFLAGS = ${CC_OPTS} ...                          
+;;
+;;  --enable-static-ruby 
+;;
+;;  ./configure --prefix=/usr/local/stow/ruby-static-1.9.3-p194 --with-static-linked-ext --disable-shared
+;;
+
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+command='./configure --prefix=/usr/local/stow/ruby-static-1.9.3-p194 --with-static-linked-ext --disable-shared'
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "ruby-static-1.9.3-p194.tar.gz")
+ (url . nil)
+ (projname . "ruby-static-1.9.3-p194")
+))
