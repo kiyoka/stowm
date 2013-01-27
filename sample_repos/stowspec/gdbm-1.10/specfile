@@ -4,14 +4,23 @@
   echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
   exit 1
 fi
-command='./configure --prefix=/usr/local/stow/gdbm-1.10' 
+command='env CC=/usr/bin/gcc  ./configure --prefix=/usr/local/stow/gdbm-1.10' 
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
 ${command}
 ")
+ (patch . "")
  (make . "make")
- (install . "make install")
+ (install . "make install
+cd src
+ar cru libgdbm.a *.o
+ranlib libgdbm.a
+rm -f /usr/local/stow/gdbm-1.10/lib/libgdbm.4.dylib
+rm -f /usr/local/stow/gdbm-1.10/lib/libgdbm.dylib -> libgdbm.4.dylib
+rm -f /usr/local/stow/gdbm-1.10/lib/libgdbm.la
+/bin/cp libgdbm.a /usr/local/stow/gdbm-1.10/lib/libgdbm.a
+")
  (arc . "gdbm-1.10.tar.gz")
  (url . "http://core.ring.gr.jp/pub/GNU/gdbm/gdbm-1.10.tar.gz")
  (projname . "gdbm-1.10")
