@@ -1,0 +1,18 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+command='env CC=/usr/bin/gcc ./configure --prefix=/Users/kiyoka/work/github/MacRuby --enable-static'
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "libiconv-1.14.tar.gz")
+ (url . "http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz")
+ (projname . "libiconv-1.14")
+))
