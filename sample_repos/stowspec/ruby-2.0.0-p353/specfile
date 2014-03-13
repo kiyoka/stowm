@@ -1,0 +1,18 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "if [ ! -e ./configure ] ; then
+  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'
+  exit 1
+fi
+command='./configure --prefix=/usr/local/stow/ruby-2.0.0-p353' 
+echo \" \" ============================================================
+echo \" \" [[ ${command} ]]
+echo \" \" ============================================================
+${command}
+")
+ (make . "make")
+ (install . "make install")
+ (arc . "ruby-2.0.0-p353.tar.gz")
+ (url . "http://cache.ruby-lang.org/pub/ruby/2.0/ruby-2.0.0-p353.tar.gz")
+ (projname . "ruby-2.0.0-p353")
+))
