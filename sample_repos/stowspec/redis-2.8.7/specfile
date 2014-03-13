@@ -1,0 +1,9 @@
+;;-*- mode: scheme; syntax: scheme -*-;;
+(define-stowspec '(
+ (conf . "")
+ (make . "make")
+ (install . "make PREFIX=/usr/local/stow/redis-2.8.7 install")
+ (arc . "redis-2.8.7.tar.gz")
+ (url . "http://download.redis.io/releases/redis-2.8.7.tar.gz")
+ (projname . "redis-2.8.7")
+))
