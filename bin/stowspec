@@ -500,7 +500,7 @@
       (display-help)
       (exit 1)))
 
-  (let* ((delete-action (eq? "disable" keyword))
+  (let* ((delete-action (equal? "disable" keyword))
          (lst (get-installed-info envs))
          ;; ----------
          ;; search the number in list

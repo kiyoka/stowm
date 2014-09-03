@@ -1,11 +1,11 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
 (let ((emacs-bin (cond
-                  ((eq? "Darwin" uname)
+                  ((equal? "Darwin" uname)
                    "/Applications/Emacs.app/Contents/MacOS/Emacs")
                   (else
                    "/usr/local/bin/emacs")))
       (prefix    (cond
-                  ((eq? "Darwin" uname)
+                  ((equal? "Darwin" uname)
                    "")
                   (else
                    "PREFIX=/usr/local/stow/apel-10.8/"))))

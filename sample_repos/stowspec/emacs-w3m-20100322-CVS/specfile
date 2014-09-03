@@ -1,5 +1,5 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(let1 emacs-opt (if (eq? "Darwin" uname)
+(let1 emacs-opt (if (equal? "Darwin" uname)
                     "--with-emacs=/Applications/Emacs.app/Contents/MacOS/Emacs --with-lispdir=/Applications/Emacs.app/Contents/Resources/site-lisp"
                     "--with-emacs=/usr/local/bin/emacs")
       (define-stowspec `(

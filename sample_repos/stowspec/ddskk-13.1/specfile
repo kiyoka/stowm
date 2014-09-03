@@ -1,5 +1,5 @@
 ;;-*- mode: scheme; syntax: scheme -*-;;
-(if (not (eq? "Darwin" uname))
+(if (not (equal? "Darwin" uname))
     (print "This project can be build only darwin(MacOS X)")
     (define-stowspec '(
                        (conf . "")
