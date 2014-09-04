@@ -29,3 +29,4 @@ tar zxf compiler-rt-${ver}.src.tar.gz
 # Archive all
 rm -f *.tar.gz
 tar zcf llvm-${ver}.tar.gz llvm-${ver}
+rm -rf ./llvm-${ver}
