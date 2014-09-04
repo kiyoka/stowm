@@ -8,8 +8,6 @@ command='./configure --prefix=/usr/local/stow/llvm-3.4'
 echo \" \" ============================================================
 echo \" \" [[ ${command} ]]
 echo \" \" ============================================================
-export CC=gcc
-export CXX=g++
 ${command}
 ")
  (make . "make")
