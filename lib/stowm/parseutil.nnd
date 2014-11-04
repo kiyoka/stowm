@@ -1,0 +1,70 @@
+;; #-*- mode: nendo; syntax: scheme -*-;;
+;; Some parser library functions
+
+(use srfi-9)
+(require "uri")
+
+(define-record-type <parsed>
+  (parsed scheme host port path proj package arc-type ver)
+  parsed?
+  (path path)
+  (proj proj)
+  (package package)
+  (arc-type arc-type)
+  (ver ver)
+  (support support))
+
+;; This parser can handle like:
+;;   *.tar.gz
+;;   *.tar.bz2
+;;   *.tar.xz
+;;   http://hostname/xxx/yyy/*.tar.gz
+;;
+;; return: <parsed> record
+(define (stowm-parse-url url-string)
+  (let1 url (URI.parse url-string)
+    (let1 fields (stowm-split-filename)
+      (parsed
+       uri.scheme      ;; => "http"
+       uri.host        ;; => "www.example.com"
+       uri.port        ;; => 80
+       uri.path        ;; => "/xxx/yyy/aaaa-1.2.3.tar.gz"
+       ))))
+
+;; `regex' is a string or Regexp class.
+;;   returns ( $0-string  $1-string  $2-string  $3-string ... )
+(define (stowm-regex-match regex str)
+  (let1 regex (if (regexp? regex)
+                  regex
+                  (string->regexp regex))
+    (let1 matchdata (rxmatch regex str)
+      (if matchdata
+          (matchdata.to_a.to_list)
+          #f))))
+
+(define stowm-ext-list '(
+                         ("tar[.]gz"   . 'tgz)
+                         ("tgz"        . 'tgz)
+                         ("tar[.]bz2"  . 'bz2)
+                         ("tar[.]xz"   . 'xz)
+                         ("tar[.]z"    . 'z)
+                         ("tar[.]Z"    . 'z)))
+                         
+
+(define stowm-rx-project-name "([a-zA-Z][a-zA-Z0-9]+)")
+(define stowm-rx-version      "([0-9.]+)")
+(define stowm-rx-ext          (+ "(" (string-join
+                                      (map car stowm-ext-list)
+                                      "|") ")"))
+(define (stowm-split-filename filename)
+  (let1 lst
+      (stowm-regex-match (+ stowm-rx-project-name "[-]" stowm-rx-version "[.]" stowm-rx-ext) filename)
+    (if lst
+        (cdr lst)
+        '(#f #f #f))))
+
+(define (stowm-split-path path)
+  (let1 lst (to-list (File.split path))
+    (let ([dirname  (first  lst)]
+          [filename (second lst)])
+      (list dirname filename))))
