@@ -119,6 +119,13 @@
        (stowm-split-filename
         "emacs-24.4.tar.gz"))
 
+(test* "split-filename (10)" '(
+                              "ruby"
+                              "2.2.0-preview1"
+                              "tar.bz2")
+       (stowm-split-filename
+        "ruby-2.2.0-preview1.tar.bz2"))
+
 (test* "split-filename:flagment (1)" '(
                                        "filename"
                                        #f
@@ -153,6 +160,128 @@
                                        #f)
        (stowm-split-filename
         "1.2.3.tar.gz"))
+
+
+(test* "get-ext-type (1)" 'gz
+       (stowm-get-ext-type
+        "tgz"))
+
+(test* "get-ext-type (2)" 'gz
+       (stowm-get-ext-type
+        "tar.gz"))
+
+(test* "get-ext-type (3)" 'bz2
+       (stowm-get-ext-type
+        "tar.bz2"))
+
+(test* "get-ext-type (4)" 'xz
+       (stowm-get-ext-type
+        "tar.xz"))
+
+(test* "get-ext-type (5)" 'z
+       (stowm-get-ext-type
+        "tar.Z"))
+
+(test* "get-ext-type (6)" #f
+       (stowm-get-ext-type
+        ".zip"))
+
+(test* "get-ext-type (7)" #f
+       (stowm-get-ext-type
+        ".7z"))
+
+
+(test* "parse-url (1)" #t
+       (parsed? (stowm-parse-url "http://ftp.gnu.org/gnu/tar/tar-1.28.tar.xz")))
+
+(test* "parse-url (2)" "http"
+       (let1 parsed (stowm-parse-url "http://ftp.gnu.org/gnu/tar/tar-1.28.tar.xz")
+         (scheme parsed)))
+
+(test* "parse-url (3)" '(
+                         "http"
+                         "ftp.gnu.org"
+                         80
+                         "/gnu/tar/tar-1.28.tar.xz")
+       (let1 parsed (stowm-parse-url "http://ftp.gnu.org/gnu/tar/tar-1.28.tar.xz")
+         (list
+          (scheme parsed)
+          (host parsed)
+          (port parsed)
+          (path parsed))))
+
+(test* "parse-url (4)" '(
+                         "tar"
+                         "1.28"
+                         "tar-1.28"
+                         "tar.xz"
+                         xz)
+       (let1 parsed (stowm-parse-url "http://ftp.gnu.org/gnu/tar/tar-1.28.tar.xz")
+         (list
+          (proj parsed)
+          (ver  parsed)
+          (package parsed)
+          (ext  parsed)
+          (arc-type  parsed))))
+
+(test* "parse-url (5)" '(
+                         "/tmp/tar-1.28.tar.xz"
+                         "/tmp"
+                         "tar-1.28.tar.xz"
+                         "tar"
+                         "1.28"
+                         "tar-1.28"
+                         "tar.xz"
+                         xz)
+       (let1 parsed (stowm-parse-url "/tmp/tar-1.28.tar.xz")
+         (list
+          (path parsed)
+          (dir parsed)
+          (filename parsed)
+          (proj parsed)
+          (ver  parsed)
+          (package parsed)
+          (ext  parsed)
+          (arc-type  parsed))))
+
+(test* "parse-url (6)" '(
+                         "/pub/software/scm/git/git-2.1.3.tar.xz"
+                         "/pub/software/scm/git"
+                         "git-2.1.3.tar.xz"
+                         "git"
+                         "2.1.3"
+                         "git-2.1.3"
+                         "tar.xz"
+                         xz)
+       (let1 parsed (stowm-parse-url "https://www.kernel.org/pub/software/scm/git/git-2.1.3.tar.xz")
+         (list
+          (path parsed)
+          (dir parsed)
+          (filename parsed)
+          (proj parsed)
+          (ver  parsed)
+          (package parsed)
+          (ext  parsed)
+          (arc-type  parsed))))
+
+(test* "parse-url (7)" '(
+                         "/pub/ruby/2.2"
+                         "ruby-2.2.0-preview1.tar.bz2"
+                         "ruby"
+                         "2.2.0-preview1"
+                         "ruby-2.2.0-preview1"
+                         "tar.bz2"
+                         bz2)
+       (let1 parsed (stowm-parse-url "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0-preview1.tar.bz2")
+         (list
+          (dir parsed)
+          (filename parsed)
+          (proj parsed)
+          (ver  parsed)
+          (package parsed)
+          (ext  parsed)
+          (arc-type  parsed))))
+
 
 ;;===================================================================
 (test-end)

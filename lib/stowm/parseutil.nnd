@@ -4,32 +4,6 @@
 (use srfi-9)
 (require "uri")
 
-(define-record-type <parsed>
-  (parsed scheme host port path proj package arc-type ver)
-  parsed?
-  (path path)
-  (proj proj)
-  (package package)
-  (arc-type arc-type)
-  (ver ver)
-  (support support))
-
-;; This parser can handle like:
-;;   *.tar.gz
-;;   *.tar.bz2
-;;   *.tar.xz
-;;   http://hostname/xxx/yyy/*.tar.gz
-;;
-;; return: <parsed> record
-(define (stowm-parse-url url-string)
-  (let1 url (URI.parse url-string)
-    (let1 fields (stowm-split-filename)
-      (parsed
-       uri.scheme      ;; => "http"
-       uri.host        ;; => "www.example.com"
-       uri.port        ;; => 80
-       uri.path        ;; => "/xxx/yyy/aaaa-1.2.3.tar.gz"
-       ))))
 
 ;; `regex' is a string or Regexp class.
 ;;   returns ( $0-string  $1-string  $2-string  $3-string ... )
@@ -43,23 +17,22 @@
           #f))))
 
 (define stowm-ext-list '(
-                         ("tar[.]gz"   . 'tgz)
-                         ("tgz"        . 'tgz)
-                         ("tar[.]bz2"  . 'bz2)
-                         ("tar[.]xz"   . 'xz)
-                         ("tar[.]z"    . 'z)
-                         ("tar[.]Z"    . 'z)))
+                         ("tar[.]gz"    . gz)
+                         ("tgz"         . gz)
+                         ("tar[.]bz2"   . bz2)
+                         ("tar[.]xz"    . xz)
+                         ("tar[.][zZ]"  . z)))
                          
-
 (define stowm-rx-project-name "([a-zA-Z][a-zA-Z0-9]+)")
-(define stowm-rx-version      "([0-9.]+)")
+(define stowm-rx-version      "([0-9.]+(-preview[0-9]+|-rc[0-9]+)?)")
 (define stowm-rx-ext          (+ "(" (string-join
                                       (map car stowm-ext-list)
                                       "|") ")"))
 (define (stowm-split-filename filename)
   (cond
    ((stowm-regex-match (+ "^" stowm-rx-project-name "[-]" stowm-rx-version "[.]" stowm-rx-ext "$") filename)
-    => (lambda (x) (cdr x)))
+    => (lambda (x)
+         (list (second x) (third x) (fifth x))))
    ((stowm-regex-match (+ "^" stowm-rx-project-name "$") filename)
     => (lambda (x)
          (list (second x) #f #f)))
@@ -77,3 +50,56 @@
     (let ([dirname  (first  lst)]
           [filename (second lst)])
       (list dirname filename))))
+
+(define (stowm-get-ext-type ext-string)
+  (let1 lst (filter-map
+             (lambda (entry)
+               (if (stowm-regex-match (car entry) ext-string)
+                   (cdr entry)
+                   #f))
+             stowm-ext-list)
+    (if (< 0 (length lst))
+        (first lst)
+        #f)))
+
+(define-record-type <parsed>
+  (parsed scheme host port path dir filename proj ver package ext arc-type)
+  parsed?
+  (scheme scheme)
+  (host host)
+  (port port)
+  (path path)
+  (dir dir)
+  (filename filename)
+  (proj proj)
+  (ver ver)
+  (package package)
+  (ext ext)
+  (arc-type arc-type))
+
+;; This parser can handle like:
+;;   *.tar.gz
+;;   *.tar.bz2
+;;   *.tar.xz
+;;   http://hostname/xxx/yyy/*.tar.gz
+;;
+;; return: <parsed> record
+(define (stowm-parse-url url-string)
+  (let1 url (URI.parse url-string)
+    (let1 lst (stowm-split-path url.path)
+      (let1 fields (stowm-split-filename (second lst))
+        (parsed
+         url.scheme      ;; => "http"
+         url.host        ;; => "www.example.com"
+         url.port        ;; => 80
+         url.path        ;; => "/xxx/yyy/aaaa-1.2.3.tar.gz"
+         (first lst)     ;; => "/xxx/yyy"
+         (second lst)    ;; => "aaaa-1.2.3.tar.gz"
+         (or (first  fields) "") ;; => "aaaa"
+         (or (second fields) "");; => "1.2.3"
+         (+ (or (first fields) "")
+            "-"
+            (or (second fields) "")) ;; => "aaaa-1.2.3"
+         (or (third  fields) "");; => "tar.gz"
+         (stowm-get-ext-type (or (third  fields) ""))
+         )))))
