@@ -41,76 +41,118 @@
 (use stowm.parseutil)
 (test-module 'parseutil)
 
-(test* "parseutil (1)" '(
-                         "/xxx/yyy"
-                         "aaaa-1.2.3.tar.gz")
+(test* "split-path (1)" '(
+                          "/xxx/yyy"
+                          "aaaa-1.2.3.tar.gz")
        (stowm-split-path
         "/xxx/yyy/aaaa-1.2.3.tar.gz"))
 
-(test* "parseutil (2)" '(
-                         "/"
-                         "aaaa-1.2.3.tar.gz")
+(test* "split-path (2)" '(
+                          "/"
+                          "aaaa-1.2.3.tar.gz")
        (stowm-split-path
         "/aaaa-1.2.3.tar.gz"))
 
-(test* "parseutil (3)" '(
-                         "."
-                         "aaaa-1.2.3.tar.gz")
+(test* "split-path (3)" '(
+                          "."
+                          "aaaa-1.2.3.tar.gz")
        (stowm-split-path
         "aaaa-1.2.3.tar.gz"))
 
-(test* "parseutil (4)" '(
-                         "."
-                         "")
+(test* "split-path (4)" '(
+                          "."
+                          "")
        (stowm-split-path
         ""))
 
-(test* "parseutil (5)" '(
-                         "aaaa"
-                         "1.2.3"
-                         "tar.gz")
+(test* "split-filename (1)" '(
+                              "aaaa"
+                              "1.2.3"
+                              "tar.gz")
        (stowm-split-filename
         "aaaa-1.2.3.tar.gz"))
 
-(test* "parseutil (6)" '(#f #f #f)
+(test* "split-filename (2)" '("aaaa" #f "tgz")
        (stowm-split-filename
-        "aaaa.tar.gz"))
+        "aaaa.tgz"))
 
-(test* "parseutil (7)" '(#f #f #f)
+(test* "split-filename (3)" '(#f #f #f)
        (stowm-split-filename
         "aaaa1.2.3.tar.gz"))
 
-(test* "parseutil (8)" '(#f #f #f)
+(test* "split-filename (4)" '(#f #f #f)
        (stowm-split-filename
         "aaaa-1.2.3.gz"))
 
-(test* "parseutil (9)" '(
-                         "aaaa"
-                         "1.2.3"
-                         "tar.bz2")
+(test* "split-filename (5)" '(
+                              "aaaa"
+                              "1.2.3"
+                              "tar.bz2")
        (stowm-split-filename
         "aaaa-1.2.3.tar.bz2"))
 
-(test* "parseutil (10)" '(
-                         "aaaa"
-                         "1.2.3"
-                         "tar.xz")
+(test* "split-filename (6)" '(
+                              "aaaa"
+                              "1.2.3"
+                              "tar.xz")
        (stowm-split-filename
         "aaaa-1.2.3.tar.xz"))
 
-(test* "parseutil (11)" '(
-                         "aaaa"
-                         "1.2.3"
-                         "tar.z")
+(test* "split-filename (7)" '(
+                              "aaaa"
+                              "1.2.3"
+                              "tar.z")
        (stowm-split-filename
         "aaaa-1.2.3.tar.z"))
 
-(test* "parseutil (12)" '(
-                         "aaaa"
-                         "1.2.3"
-                         "tar.Z")
+(test* "split-filename (8)" '(
+                              "aaaa"
+                              "1.2.3"
+                              "tar.Z")
        (stowm-split-filename
         "aaaa-1.2.3.tar.Z"))
+
+(test* "split-filename (9)" '(
+                              "emacs"
+                              "24.4"
+                              "tar.gz")
+       (stowm-split-filename
+        "emacs-24.4.tar.gz"))
+
+(test* "split-filename:flagment (1)" '(
+                                       "filename"
+                                       #f
+                                       #f)
+       (stowm-split-filename
+        "filename"))
+
+(test* "split-filename:flagment (2)" '(
+                                       "filename"
+                                       "3.2.1"
+                                       #f)
+       (stowm-split-filename
+        "filename-3.2.1"))
+
+(test* "split-filename:flagment (3)" '(
+                                       "filename"
+                                       #f
+                                       "tar.gz")
+       (stowm-split-filename
+        "filename.tar.gz"))
+
+(test* "split-filename:flagment (4)" '(
+                                       #f
+                                       #f
+                                       #f)
+       (stowm-split-filename
+        "tar.gz"))
+
+(test* "split-filename:flagment (5)" '(
+                                       #f
+                                       #f
+                                       #f)
+       (stowm-split-filename
+        "1.2.3.tar.gz"))
 
 ;;===================================================================
 (test-end)

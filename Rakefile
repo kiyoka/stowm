@@ -19,7 +19,8 @@ end
 task :test do
   sh "/bin/rm -f test.record"
   sh "echo "" > test.log"
-  sh "ruby -I ./lib /usr/local/bin/nendo  ./test/parseutil-test.nnd             >> test.log"
+  sh "nendo -I ./lib  ./test/parseutil-test.nnd             >> test.log"
+  sh "cat test.log"
   sh "cat test.record"
   sh "grep ' 0 failed, ' test.record  > /dev/null"
 end
