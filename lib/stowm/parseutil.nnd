@@ -24,26 +24,30 @@
                          ("tar[.][zZ]"  . z)))
                          
 (define stowm-rx-project-name "([a-zA-Z][a-zA-Z0-9]+)")
-(define stowm-rx-version      "([0-9.]+(-preview[0-9]+|-rc[0-9]+)?)")
+(define stowm-rx-version      "(.+)")
 (define stowm-rx-ext          (+ "(" (string-join
                                       (map car stowm-ext-list)
                                       "|") ")"))
 (define (stowm-split-filename filename)
-  (cond
-   ((stowm-regex-match (+ "^" stowm-rx-project-name "[-]" stowm-rx-version "[.]" stowm-rx-ext "$") filename)
-    => (lambda (x)
-         (list (second x) (third x) (fifth x))))
-   ((stowm-regex-match (+ "^" stowm-rx-project-name "$") filename)
-    => (lambda (x)
-         (list (second x) #f #f)))
-   ((stowm-regex-match (+ "^" stowm-rx-project-name "[.]" stowm-rx-ext "$") filename)
-    => (lambda (x)
-         (list (second x) #f (third x))))
-   ((stowm-regex-match (+ "^" stowm-rx-project-name "[-]" stowm-rx-version "$") filename)
-    => (lambda (x)
-         (list (second x) (third x) #f)))
-   (else
-    '(#f #f #f))))
+  ;; detect ext
+  (let1 filename-and-ext
+      (cond ((stowm-regex-match (+ "(.+)[.]" stowm-rx-ext "$") filename)
+             => (lambda (x)
+                  (cons (second x)
+                        (third x))))
+            (else
+             (cons filename #f)))
+    (let ([filename (car filename-and-ext)]
+          [ext (cdr filename-and-ext)])
+      (cond
+       ((stowm-regex-match (+ "^" stowm-rx-project-name "[-]" stowm-rx-version "$") filename)
+        => (lambda (x)
+             (list (second x) (third x) ext)))
+       ((stowm-regex-match (+ "^" stowm-rx-project-name "$") filename)
+        => (lambda (x)
+             (list (second x) #f ext)))
+       (else
+        '(#f #f #f))))))
 
 (define (stowm-split-path path)
   (let1 lst (to-list (File.split path))

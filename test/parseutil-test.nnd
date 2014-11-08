@@ -65,6 +65,9 @@
        (stowm-split-path
         ""))
 
+(stowm-split-filename
+ "aaaa-1.2.3.tar.gz")
+
 (test* "split-filename (1)" '(
                               "aaaa"
                               "1.2.3"
@@ -80,7 +83,7 @@
        (stowm-split-filename
         "aaaa1.2.3.tar.gz"))
 
-(test* "split-filename (4)" '(#f #f #f)
+(test* "split-filename (4)" '("aaaa" "1.2.3.gz" #f)
        (stowm-split-filename
         "aaaa-1.2.3.gz"))
 
