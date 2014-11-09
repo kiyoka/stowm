@@ -1,0 +1,13 @@
+;; #-*- mode: nendo; syntax: scheme -*-;;
+;; Basic utility library functions
+
+;; `regex' is a string or Regexp class.
+;;   returns ( $0-string  $1-string  $2-string  $3-string ... )
+(define (stowm-regex-match regex str)
+  (let1 regex (if (regexp? regex)
+                  regex
+                  (string->regexp regex))
+    (let1 matchdata (rxmatch regex str)
+      (if matchdata
+          (matchdata.to_a.to_list)
+          #f))))

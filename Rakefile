@@ -20,6 +20,7 @@ task :test do
   sh "/bin/rm -f test.record"
   sh "echo "" > test.log"
   sh "nendo -I ./lib  ./test/parseutil-test.nnd             >> test.log"
+  sh "nendo -I ./lib  ./test/env-test.nnd                   >> test.log"
   sh "cat test.log"
   sh "cat test.record"
   sh "grep ' 0 failed, ' test.record  > /dev/null"

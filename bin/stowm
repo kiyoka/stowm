@@ -610,21 +610,6 @@
 
 
 (define (main argv)
-  (define (version-value version-str)
-    (let1 ver
-        (map
-         to-i
-         (to-list (version-str.split ".")))
-      (+
-       (* (first  ver) (* 1000 1000))
-       (* (second ver) 1000)
-       (third  ver))))
-  
-  ;; version check
-  (when (< (version-value *nendo-version*) (version-value "0.6.0"))
-    (printf "Error: Stowspec expects nendo %s.%s.%s or later version.\n" _first _second _third)
-    (printf "       Installed nendo version is [%s]\n" *nendo-version*)
-    (exit 1))
 
   ;; load dotfiles
   (if (File.exist? initfile-path)

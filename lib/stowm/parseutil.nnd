@@ -4,25 +4,13 @@
 (use srfi-9)
 (require "uri")
 
-
-;; `regex' is a string or Regexp class.
-;;   returns ( $0-string  $1-string  $2-string  $3-string ... )
-(define (stowm-regex-match regex str)
-  (let1 regex (if (regexp? regex)
-                  regex
-                  (string->regexp regex))
-    (let1 matchdata (rxmatch regex str)
-      (if matchdata
-          (matchdata.to_a.to_list)
-          #f))))
-
 (define stowm-ext-list '(
                          ("tar[.]gz"    . gz)
                          ("tgz"         . gz)
                          ("tar[.]bz2"   . bz2)
                          ("tar[.]xz"    . xz)
                          ("tar[.][zZ]"  . z)))
-                         
+
 (define stowm-rx-project-name "([a-zA-Z][a-zA-Z0-9]+)")
 (define stowm-rx-version      "(.+)")
 (define stowm-rx-ext          (+ "(" (string-join
