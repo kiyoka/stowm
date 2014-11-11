@@ -33,31 +33,34 @@
 
 
 (use nendo.test)
-(test-start "env")
+(test-start "util")
 
 ;;===================================================================
 ;;-------------------------------------------------------------------
-(test-section "env")
-(use stowm.env)
-(test-module 'env)
+(test-section "util")
+(use stowm.util)
+(test-module 'util)
 
-(test* "default-env (1)" #t
-       (stowm-env?
-        (stowm-get-default-env)))
+(test* "regex-match (1)" '("string 100" "string" "100")
+       (stowm-regex-match "^([a-z]+) ([0-9]+)$" "string 100"))
 
-(test* "default-env (2)" '(
-                           "/usr/local/stow"
-                           "/usr/local"
-                           "/usr/local/bin"
-                           "/usr/local/lib"
-                           "/tmp/stowm")
-       (let1 env (stowm-get-default-env)
-         (list
-          (stow-home env)
-          (local env)
-          (bin env)
-          (lib env)
-          (temp env))))
+(test* "regex-match (2)" '("string 100" "string" "100")
+       (stowm-regex-match #/^([a-z]+) ([0-9]+)$/ "string 100"))
+
+(test* "regex-match (3)" #f
+       (stowm-regex-match "^([a-z]+) ([0-9]+)$" "100 string"))
+
+
+(test* "exec-sh (1)" 6
+       (begin (stowm-exec-sh "expr 1 + 2 + 3 > /tmp/util-test-out.txt" #f)
+              (with-open "/tmp/util-test-out.txt"
+                         (lambda (f)
+                           (read f)))))
+
+(test* "get-dir-entries (1)" '("stowm" "stowm.rb")
+       (stowm-get-dir-entries "./lib"))
+
+
 
 ;;===================================================================
 (test-end)

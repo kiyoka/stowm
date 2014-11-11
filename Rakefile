@@ -19,6 +19,7 @@ end
 task :test do
   sh "/bin/rm -f test.record"
   sh "echo "" > test.log"
+  sh "nendo -I ./lib  ./test/util-test.nnd                  >> test.log"
   sh "nendo -I ./lib  ./test/parseutil-test.nnd             >> test.log"
   sh "nendo -I ./lib  ./test/env-test.nnd                   >> test.log"
   sh "cat test.log"
@@ -27,5 +28,9 @@ task :test do
 end
 
 task :go do
-  sh "ruby -I ./lib ./bin/stowm"
+  sh "nendo -I ./lib ./bin/stowm"
+end
+
+task :golist do
+  sh "nendo -I ./lib ./bin/stowm list"
 end

@@ -3,275 +3,36 @@
 :; exec /usr/local/bin/nendo $0 $*
 
 (use srfi-1)
+(use srfi-9)
 (use util.list)
-(require "digest/sha1")
-
-(define archive-file-pattern "([a-zA-Z].*)")
-(define initfile-path       (File.expand_path "~/.stowspec"))
-(define stowspec-db-path    (File.expand_path "~/.stowspec.db"))
-(define stow-home           (File.expand_path "~/stowspec"))
-(define stow-target "/usr/local/stow")
-(define stow-local  "/usr/local")
-(define stow-bin    "/usr/local/bin")
-(define stow-lib    "/usr/local/lib")
-(define stow-temp   "/tmp/stowspec")
-(define stow-program
-  (let1 lst
-      (filter-map
-       (lambda (x)
-         (let ((path1 (+ "/usr/bin/" (car x)))
-               (path2 (+ "/usr/local/bin/" (car x))))
-           (if (File.exist? path1)
-               (cons path1 (cdr x))
-               (if (File.exist? path2)
-                   (cons path2 (cdr x))))))
-       '(("xstow" . "-f") ("stow" . "")))
-    (if (< 0 (length lst))
-        (car lst)
-        (begin
-          (STDERR.puts "Error: not found the (stow or xstow) program binary.")
-          (exit 1)))))
-
-
-;; `regex' is a string or Regexp class.
-;;   returns ( $0-string  $1-string  $2-string  $3-string ... )
-(define (regex-match regex str)
-  (let1 regex (if (regexp? regex)
-                  regex
-                  (string->regexp regex))
-    (let1 matchdata (rxmatch regex str)
-      (if matchdata
-          (matchdata.to_a.to_list)
-          #f))))
-
-;; test
-(when #f
-  (list
-   (regex-match "^[a-z]+$" "abc")
-   (regex-match "^([a-z]+)([0-9]+)$" "abc123")
-   (regex-match #/^[a-z]+$/ "abc")
-   (regex-match #/^([a-z]+)([0-9]+)$/ "abc123")))
+(use stowm.env)
+(use stowm.util)
+(use stowm.parseutil)
 
 
 (define (display-help)
   (print "")
   (print "Usage: ")
-  (print "  1. stowspec  number              ... enable  program. (rewtow -R)")
-  (print "  2. stowspec -number              ... disable program. (rewtow -D)")
-  (print "  3. stowspec [URL of tar.gz]      ... fetch, setup specfile, build program.")
-  (print "  4. stowspec tar.gz               ... setup specfile, build program.")
-  (print "  5. stowspec                      ... list up installed program list.")
+  (print "  1. stowm enable   [proj]            ... enable  installed program. (rewtow -R)")
+  (print "     stowm enable   [num]             ... enable  installed program. (rewtow -R)")
+  (print "  2. stowm disable  [proj]            ... disable installed program. (rewtow -D)")
+  (print "     stowm disable  [num]             ... disable installed program. (rewtow -D)")
+  (print "  3. stowm install  [URL of tar.gz]   ... fetch, setup specfile, build program.")
+  (print "  4. stowm install  tar.gz            ... setup specfile, build program.")
+  (print "  5. stowm list                       ... display installed program list.")
   (print ""))
 
 
-(define (exec-sh script)
-  (let* ((digest (Digest::SHA1.hexdigest script))
-         (tmpfile (sprintf "/tmp/stowspec_script.%s.sh" digest)))
-    (with-open
-     tmpfile
-     (lambda (f)
-       (f.puts script))
-     "w")
-    (printf "---BEGIN---(%s)\n" tmpfile)
-    (.system (+ "bash " tmpfile))
-    (print "---END---")
-    (File.delete tmpfile)
-    ))
+(define (pickup-projname path)
+  (let1 parsed (stowm-parse-url path)
+    (proj parsed)))
 
-
-(define (tgz-to-name tgz)
-  (cond
-   ((regex-match (+ "^.+[/]" archive-file-pattern "(.tar.gz|.tgz|.tar.bz2)$") tgz)
-    => second)
-   ((regex-match (+ "^"   archive-file-pattern "(.tar.gz|.tgz|.tar.bz2)$") tgz)
-    => second)
-   (else
-    #f)))
-
-;; test
-(when #f
-  (list
-   (tgz-to-name "abc-1.2.3.tar.gz")
-   (tgz-to-name "abc-1.2.3.tar.bz2")
-   (tgz-to-name "abc-1.2.3.tgz")
-   (tgz-to-name "file.txt")
-   (tgz-to-name "http://ftp.gnu.org/gnu/wget/wget-1.9.tar.gz")
-   ))
-
-
-(define (get-project-basename name-and-ver)
-  (cond
-   ((regex-match #/^([A-Za-z0-9_-]+)[_-][0-9]+/ name-and-ver)
-    => second)
-   (else
-    "???")))
-
-;; test
-(when #f
-  (list
-   (get-project-basename "abc-1.2.3.tar.gz")
-   (get-project-basename "abc-1.2.3.tar.bz2")
-   (get-project-basename "abc-1.2.3.tgz")
-   (get-project-basename "file.txt")
-   (get-project-basename "wget-1.9.tar.gz")
-   (get-project-basename "w3m-0.5.2")
-   (get-project-basename "emacs-w3m-20081218-CVS")
-   (get-project-basename 
-    (tgz-to-name "http://ftp.gnu.org/gnu/wget/wget-1.9.tar.gz"))
-   ))
-
-(define (get-envs)
-  (let* ((pwd (ENV.fetch "PWD"))
-         (in-project
-          (cond
-           ((regex-match (+ "^" stow-home "/" archive-file-pattern "$") pwd)
-            => second)
-           (else
-            #f))))
-    `(
-      (pwd         . ,pwd)                  ;; pwd
-      (home        . ,(ENV.fetch "HOME"))   ;; "/home/xxxx/"
-      (stow-home   . ,stow-home)            ;; "/home/xxxx/stowspec"
-      (target      . ,stow-target)          ;; "/usr/local/stow"
-      (local       . ,stow-local)           ;; "/usr/local"
-      (bin         . ,stow-bin)             ;; "/usr/local/bin"
-      (lib         . ,stow-lib)             ;; "/usr/local/lib"
-      (temp        . ,stow-temp)            ;; "/tmp/stowspec"
-      (project     . ,in-project)           ;; nil or "aaaa-1.2.3.tar.gz"
-      )))
-
-
-(define (get-curdir-info envs)
-  (let1 pwd (assq-ref 'pwd  envs)
-    (cond
-     ((assq-ref 'project envs)
-      => (lambda (x)
-           `(specdir . x)))
-     (else
-      `(other . "")))))
-
-
-(define let1-assoc
-  (macro (name _assoc body)
-    `(let1 ,name (assq-ref (quote ,name) ,_assoc)
-       ,body)))
-         
-
-;; test
-(when false
-  (let1 _aaa '((filename . "FILENAME")
-               (projname . "PROJNAME")
-               (url      . nil))
-    (pretty-print
-     (macroexpand
-      '(let1-assoc filename _aaa
-         (let1-assoc projname _aaa
-            (cons filename projname)))))
-
-    (print
-     (let1-assoc filename _aaa
-       (let1-assoc projname _aaa
-         (+ filename ":" projname))))
-    (exit 0)))
-
-
-(define (echo-str str)
-  (string-join
-   (list
-    (sprintf "echo \" \" ============================================================")
-    (sprintf "echo \" \" ' [[ %s ]] '\n %s" str str)
-    (sprintf "echo \" \" ============================================================"))
-   "\n"))
-(define (pass-str str) str)
-
-(define (gen-script envs project-envs spec)
-
-  (let1 _ (append envs project-envs)
-    (let1-assoc projname _
-      (let1-assoc projpath _
-        (let1-assoc arc      _
-         (let1-assoc workdir  _
-           (let1-assoc url      _
-             (let1 url (if (null? url)
-                           #f
-                           url)
-               (begin
-                 `(
-                   (store . ,(string-join
-                              (list
-                               (sprintf "mkdir -p %s" projpath)
-                               (if url
-                                   (echo-str (sprintf "wget -O %s/%s %s"      projpath arc url))
-                                   (pass-str (sprintf "/bin/cp %s %s"         arc projpath)))
-                               (sprintf "cd %s" projpath)
-                               "")
-                              "\n"))
-                   (build . ,(string-join
-                              (append
-                               (if (not (File.exist? (+ "./" arc)))
-                                   (if url
-                                       (list
-                                        (pass-str (sprintf "echo file [%s] was not found, so, I fetch it again." arc url))
-                                        (echo-str (sprintf "wget -O ./%s %s" arc url)))
-                                       (list
-                                        (pass-str (sprintf "echo file [%s] was not found, so, I try to get from ~/Downloads" arc))
-                                        (echo-str (sprintf "/bin/cp ~/Downloads/%s ." arc))))
-                                   '())
-                               (list
-                                (sprintf "if [ ! -e \"./%s\" ] ; then " arc)
-                                (sprintf "  echo file [%s] was not found." arc)
-                                (sprintf "  exit 1 ")
-                                (sprintf "fi")
-                                (sprintf "export TMPDIR=/tmp")
-                                (sprintf "/bin/rm -rf %s/%s" workdir projname)
-                                (sprintf "mkdir -p %s" workdir)
-                                (sprintf "/bin/cp -f %s %s" arc workdir)
-                                (sprintf "if [ ! -z \"`ls -1 | grep .patch`\" ] ; then")
-                                (sprintf "  /bin/cp -f *.patch %s" workdir)
-                                (sprintf "fi")
-                                (sprintf "cd %s" workdir)
-                                (sprintf "tar zxf %s" arc)
-                                (sprintf "for i in `ls -1 | grep .patch` ;")
-                                (sprintf "do")
-                                (echo-str (sprintf "  patch -p 0 -i ${i}"))
-                                (sprintf "done")
-                                (sprintf "cd ./%s"    projname)
-                                (assq-ref 'conf       spec)
-                                (echo-str (assq-ref 'make       spec))
-                                (echo-str (assq-ref 'install    spec))
-                                ""))
-                              "\n"))
-                   (stowspec . ,(string-join
-                                 (list
-                                  (sprintf "cd %s" projpath)
-                                  "stowspec"
-                                  "")
-                                 "\n"))
-                   ))))))))))
-
-
-(define (get-dir-entries path)
-  (filter
-   (lambda (x)
-     (not (or (x.match "[/]?[.]$")
-              (x.match "[/]?[.][.]$")
-              (x.match "^[.]"))))
-   (to-list (Dir.entries path))))
-
-;;(get-dir-entries "/usr/local/stow")
-
-
-(define (get-installed-alist local target)
-  (define (pickup-projname path)
-    (cond
-     ((regex-match "/stow/([^/]+)" path)
-      => second)
-     (else
-      #f)))
-
-  (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowspec.cache\n" local target)
-    (exec-sh script)
-    (with-open "/tmp/stowspec.cache"
+;; returns:
+;;   ( (projname1 . symlink-file1) (projname2 . symlink-file2) ... )
+(define (get-installed-alist local stow-home)
+  (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
+    (stowm-exec-sh script)
+    (with-open "/tmp/stowm.cache"
                (lambda (f)
                  (let* ((froms
                          (map
@@ -288,12 +49,12 @@
                    link-alist)))))
 
 
-(define (get-stowed-list stow-home target link-alist)
-  (let* ((projs       (get-dir-entries stow-home))
+(define (get-stowed-list home-repos stow-home link-alist)
+  (let* ((projs       (stowm-get-dir-entries home-repos))
          (projs-hash  (apply hash-table eq?
                              (map (lambda (x) (cons x #t))
                                   projs)))
-         (stowed      (get-dir-entries target))
+         (stowed      (stowm-get-dir-entries stow-home))
          (stowed-hash (apply hash-table eq?
                              (map (lambda (x) (cons x #t))
                                   stowed)))
@@ -302,88 +63,52 @@
 
     (map
      (lambda (x cnt)
-       (cons x
+       (cons x ;; project-name like ruby-2.1.3
              (list
               (if (hash-table-exist? stowed-hash x)
-                  (if (hash-table-exist? installed-hash x) 'i false)
+                  (if (hash-table-exist? installed-hash x) 'i false) ;; installed?
                   false)
-              (if (hash-table-exist? stowed-hash x) 's false)
-              (if (hash-table-exist? projs-hash  x) 'p false)
-              (get-project-basename x)
+              (if (hash-table-exist? stowed-hash x) 's false)        ;; stowed?
+              (if (hash-table-exist? projs-hash  x) 'p false)        ;; exist in repos??
               cnt)))
      all
      (range (length all)))))
 
-
-(define (save-installed-info stow-home local target)
-  (let* ([link-alist  (get-installed-alist local target)]
-         [stowed-list (get-stowed-list stow-home target link-alist]])
-    (printf "Info: reconstruct [%s]\n" stowspec-db-path)
-    (with-open stowspec-db-path
+(define (save-installed-info env)
+  (let* ([link-alist  (get-installed-alist (local env) (stow-home env))]
+         [stowed-list (get-stowed-list (home-repos env) (stow-home env) link-alist]])
+    (printf "Info: rebuild [%s]\n" (db-path env))
+    (with-open (db-path env)
                (lambda (f)
-                 (f.write (write-to-string stowed-list)))
-               "w"))0)
+                 (pretty-print stowed-list f))
+               "w"))
+  0)
 
-(define (get-installed-info envs)
-  (let ([local     (assq-ref 'local      envs)]
-        [target    (assq-ref 'target     envs)]
-        [stow-home (assq-ref 'stow-home  envs)])
-
-    (when (or
-           (not (File.exist? stowspec-db-path))
-           (let ([target-fs (File::Stat.new target)]
-                 [db-fs     (File::Stat.new stowspec-db-path)])
-             (<
-              (db-fs.mtime.to_i)
-              (target-fs.mtime.to_i))))
-      (save-installed-info stow-home local target)))
-
-  (with-open stowspec-db-path
+;; rebuild latest installed db info.
+(define (rebuild-installed-info env)
+  (when (or
+         (not (File.exist? (db-path env)))
+         (let ([stow-home-fs (File::Stat.new (stow-home env))]
+               [db-fs        (File::Stat.new (db-path env))])
+           (<
+            (db-fs.mtime.to_i)
+            (stow-home-fs.mtime.to_i))))
+    (save-installed-info env))
+  (with-open (db-path env)
              (lambda (f)
                (read f))))
-
-
-;; test-suite
-(when false
-  (let1 envs
-      '(
-        (pwd . "/home/kiyoka/work/github/nendo/sample")
-        (home . "/home/kiyoka")
-        (stow-home . "/home/kiyoka/work/github/stowspec/sample_repos/stowspec")
-        (target . "/usr/local/stow")
-        (local . "/usr/local")
-        (bin . "/usr/local/bin")
-        (lib . "/usr/local/lib")
-        (temp . "/tmp/stowspec")
-        (project))
-    
-    (when false
-      (let1 link-alist
-          (get-installed-alist (assq-ref 'local envs) (assq-ref 'target envs))
-        
-        (pretty-print (get-stowed-list (assq-ref 'stow-home envs) (assq-ref 'target envs) link-alist))))
-
-    (when true
-      (pretty-print (get-installed-info envs))))
-
-  (exit 0))
 
 
 (define (stowed-list-to-tree lst)
   (let1 program-hash (make-hash-table)
     (for-each
      (lambda (x)
-       (hash-table-push! program-hash (fifth x) x))
+       (let1 _proj (proj (stowm-parse-url (first x)))  ;; like "ruby"
+         (hash-table-push! program-hash _proj x)))
      (reverse lst))
     (reverse (hash-table->alist program-hash))))
 
-;; test
-(when false
-  (stowed-list-to-tree 
-   '(
-     ("Gauche-0.8.14" false s p "Gauche" 0) ("Gauche-0.9" i s p "Gauche" 1) ("ImageMagick-6.6.0-10" false false p "ImageMagick" 2))))
-  
-(define (listing stowed-list)
+(define (list-flat stowed-list)
   (define (ox bool-val)
     (if bool-val "O" "-"))
   (define _format_h "       %-25s %10s %10s\n")
@@ -401,7 +126,7 @@
                       (map
                        (lambda (x)
                          (sprintf _format_d
-                                  (sixth x)
+                                  (fifth x)
                                   (+ " " (first x))
                                   (ox (second x))
                                   (ox (third x))))
@@ -409,232 +134,38 @@
             (stowed-list-to-tree stowed-list))))))
 
 
-
-(define (action-by-curdir envs)
-  (define (load-specfile envs)
-    (load "./specfile")
-    (or stowspec
-        (begin
-          (STDERR.printf "Error: spec was not defined... please use (define-stowspec '(...)) form\n")
-          (exit 1))))
-
-  (define (do-build envs spec)
-    (let1 project-envs (get-project-envs envs
-                                         (assq-ref 'projname spec)
-                                         (assq-ref 'arc      spec)
-                                         (assq-ref 'url      spec))
-      (exec-sh
-       (assq-ref 'build (gen-script
-                         envs
-                         project-envs
-                         spec)))))
-  
-  (let1 curdir-info (get-curdir-info envs)
-    (cond
-     ((eq? 'specdir (car curdir-info))
-      ;; ----------
-      ;; load specfile
-      ;; ----------
-
-      (let* ((spec (load-specfile envs))
-             (_ (append envs spec)))
-        (let1-assoc target _
-          (let1-assoc projname _
-                      ;; ----------
-                      ;; build!
-                      ;; ----------
-                      (if (not (File.exist? (+ target "/" projname)))
-                          (do-build envs spec)
-                          (begin
-                            (printf "Warning: [%s] was already built and installed. rebuild? [Y/n]\n" projname)
-                            (if (yes-or-no?)
-                                (do-build envs spec)
-                                (printf "Info: build [%s] was canceled. \n" projname))))))))
-     (else
-      ;; ----------
-      ;; show current stowed status
-      ;; ----------
-      (listing 
-       (get-installed-info envs))
-      (print  "[stow-home]")
-      (printf " cd %s\n" stow-home)))))
-
-
-(define (get-project-envs envs projname arc url)
-  (let1 projpath (+ (assq-ref 'stow-home envs) "/" projname)
-    `(
-      (projname . ,projname)
-      (projpath . ,projpath)
-      (workdir  . ,(sprintf "%s/%s" (assq-ref 'temp envs) projname))
-      (arc      . ,arc)
-      (url      . ,url)
-      (specfile . ,(+ projpath "/specfile")))))
-
-
-(define (yes-or-no?)
-  (let1 ch (STDIN.getc)
-    (if (nil? ch)
-        #f
-        (not (ch.chr.match "[nN]")))))
-
-
-(define (action-by-keyword envs keyword number)
-  (define (do-restow stow-home local target delete-item restow-item)
-    (let1 script (string-join
-                  (list
-                   (sprintf "cd %s" target)
-                   (if (null? delete-item)
-                       ""
-                       (echo-str (sprintf "%s %s -D %s" (car stow-program) (cdr stow-program) (car delete-item))))
-                   (if (null? restow-item)
-                       ""
-                       (echo-str (sprintf "%s %s -R %s" (car stow-program) (cdr stow-program) (car restow-item))))
-                   "")
-                  "\n")
-      (exec-sh script)
-      (save-installed-info stow-home local target)))
-
-  (let1 keywords '("enable" "disable")
-    (when (not (memv keyword keywords))
-      (printf "Error: usable keywords are (%s) " (string-join keywords " or "))
-      (display-help)
-      (exit 1)))
-
-  (let* ((delete-action (equal? "disable" keyword))
-         (lst (get-installed-info envs))
-         ;; ----------
-         ;; search the number in list
-         ;; ----------
-         (found
-          (filter
-           (lambda (x)
-             (= number (sixth x)))
-           lst)))
-    (if (null? found)
-        (begin
-          (printf "Error: selected number [%d] was not found...\n" number)
-          (exit 1))
-        (let* ((basename (fifth (car found)))
-               (tree (stowed-list-to-tree lst))
-               (selection (assv-ref basename tree)))
-          (let ((delete-item
-                 (filter-map
-                  (lambda (x)
-                    (if (= 'i (second x))
-                        (car x)
-                        nil))
-                  selection))
-                (restow-item
-                 (filter-map
-                  (lambda (x)
-                    (if (and (= 's (third x))
-                             (= number (sixth x)))
-                        (car x)
-                        nil))
-                  selection)))
-            (cond
-             ((null? restow-item)
-              (printf "Error: selected number [%d] was not installed yet. \n" number)
-              (exit 1))
-             (delete-action
-              (do-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item '()))
-             ((equal? delete-item restow-item)
-              (printf "Info: restow [%s] again.\n" (car restow-item))
-              (do-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))
-             (else
-              (do-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))))))))
-
-
-(define (action-by-arg envs argv)
-  (let* ((m1 (regex-match (+ "^http://.+/" archive-file-pattern "$") (car argv)))
-         (m2 (regex-match (+ "^" archive-file-pattern "$") (car argv)))
-         (url      (if m1 (car m1) nil))
-         (arc      (if m1 (second m1)
-                       (if m2 (car m2) nil))))
-    (when (not (or m1 m2))
-      (printf "Error: Please specify complete URL or local archive file name.\n")
-      (display-help)
-      (exit 1))
-    (let* ((projname (or (tgz-to-name arc) ""))
-           (project-envs (get-project-envs envs projname arc url)))
-      (let1-assoc workdir project-envs
-        (let1-assoc specfile project-envs
-          (let1-assoc projpath project-envs
-            (if (or url arc)
-                (begin
-                  (printf "url      = %s\n" url)
-                  (printf "arc      = %s\n" arc)
-                  (printf "projname = %s\n" projname)
-                  (printf "workdir  = %s\n" workdir)
-                  (printf "specfile = %s\n" specfile)
-                  (let* ((scripts  (gen-script envs project-envs '())))
-                    (exec-sh (assq-ref 'store scripts))
-                    (printf "Info: specfile = %s\n" specfile)
-                    (printf "cd %s\n" projpath)
-                    (with-open specfile
-                               (lambda (f)
-                                 (f.puts ";;-*- mode: scheme; syntax: scheme -*-;;")
-                                 (f.puts "(define-stowspec '(")
-                                 (for-each
-                                  (lambda (x)
-                                    (f.puts (+ " " (write-to-string x))))
-                                  `((conf      .
-                                               ,(string-join
-                                                 (list
-                                                  "if [ ! -e ./configure ] ; then"
-                                                  "  echo 'Error: stowspec supports ./configure script included tar ball only, sorry...'"
-                                                  "  exit 1"
-                                                  "fi"
-                                                  (sprintf "command='./configure --prefix=%s/%s' " (assq-ref 'target envs) projname)
-                                                  (sprintf "echo \" \" ============================================================")
-                                                  (sprintf "echo \" \" [[ ${command} ]]")
-                                                  (sprintf "echo \" \" ============================================================")
-                                                  "${command}"
-                                                  "")
-                                                 "\n"))
-                                    (make      . "make")
-                                    (install   . "make install")
-                                    (arc       . ,arc)
-                                    (url       . ,url)
-                                    (projname  . ,projname)))
-                                 (f.puts "))"))
-                               "w")
-                    (exec-sh (assq-ref 'stowspec scripts))))
-                (begin
-                  (print "Error: please specify url by argument.")
-                  (exit 1)))))))))
-          
-;; test
-;;(action-by-arg '("a.tar.gz"))
-;;(action-by-arg '("http://www.example.com/a.tar.gz"))
-
-
 (define (main argv)
-
-  ;; load dotfiles
-  (if (File.exist? initfile-path)
-      (load initfile-path))
-  
   ;; branch by argument
-  (let1 envs (get-envs)
+  (let1 env (stowm-get-default-env)
 
-    ;; reconstruct installed-info (db)
-    (get-installed-info envs)
+    ;; load dotfiles
+    (if (File.exist? (inifile-path env))
+        (load (inifile-path env)))
+    
+    ;; home-repos exist check
+    (if (not (Dir.exist? (home-repos env)))
+        (begin
+          (STDERR.printf "DError : repos dir [%s] nessesary to use stowm.\n" (home-repos env))
+          (exit 1)))
 
-    (case (length argv)
-      ((0)
-       (action-by-curdir envs))
-      (else
-       (cond
-        ((regex-match #/^[a-zA-Z]+$/ (car argv))
-         (action-by-keyword envs (car argv) (to-i (cadr argv))))
-        ((regex-match #/^[0-9]+$/    (car argv))
-         (action-by-keyword envs "enable"   (to-i (car argv))))
-        ((regex-match #/^[-][0-9]+$/ (car argv))
-         (action-by-keyword envs "disable"  (abs (to-i (car argv)))))
+    (let1 stowed-list (rebuild-installed-info env)
+
+      (case (length argv)
+        ((0)
+         (display-help)
+         0)
         (else
-         (action-by-arg    envs argv)))))))
-
+         (cond
+          ((stowm-regex-match #/^ena?b?l?e?$/      (car argv))
+           (action-by-keyword envs 'enable         (to-i (second argv))))
+          ((stowm-regex-match #/^dis?a?b?l?e?$/    (car argv))
+           (action-by-keyword envs 'disable        (to-i (second argv))))
+          ((stowm-regex-match #/^lis?t?$/          (car argv))
+           (list-flat stowed-list)
+           0)
+          (else
+           (display-help)
+           0)))))))
 
 ;; ----------------------------------------
 ;; utility for user's "specfile" file.
