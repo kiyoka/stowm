@@ -32,5 +32,6 @@ task :go do
 end
 
 task :golist do
+  sh "rm -f ~/.stowm.db"
   sh "nendo -I ./lib ./bin/stowm list"
 end

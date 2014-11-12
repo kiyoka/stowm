@@ -23,12 +23,15 @@
   (print ""))
 
 
-(define (pickup-projname path)
-  (let1 parsed (stowm-parse-url path)
-    (proj parsed)))
+(define (pickup-package path)
+  (cond
+   ((stowm-regex-match "/stow/([^/]+)" path)
+    => second)
+   (else
+    #f)))
 
 ;; returns:
-;;   ( (projname1 . symlink-file1) (projname2 . symlink-file2) ... )
+;;   ( (package1 . symlink-file1) (package2 . symlink-file2) ... )
 (define (get-installed-alist local stow-home)
   (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
     (stowm-exec-sh script)
@@ -42,7 +45,7 @@
                         (link-alist
                          (filter-map
                           (lambda (fn)
-                            (let1 link (pickup-projname (File.readlink fn))
+                            (let1 link (pickup-package (File.readlink fn))
                               (and link
                                    (cons link fn))))
                           froms)))
@@ -60,10 +63,9 @@
                                   stowed)))
          (all         (sort (delete-duplicates (append projs stowed))))
          (installed-hash (alist->hash-table link-alist)))
-
     (map
      (lambda (x cnt)
-       (cons x ;; project-name like ruby-2.1.3
+       (cons x ;; package-name like "ruby-2.1.3"
              (list
               (if (hash-table-exist? stowed-hash x)
                   (if (hash-table-exist? installed-hash x) 'i false) ;; installed?
@@ -111,8 +113,8 @@
 (define (list-flat stowed-list)
   (define (ox bool-val)
     (if bool-val "O" "-"))
-  (define _format_h "       %-25s %10s %10s\n")
-  (define _format_d "   %2d) %-25s %10s %10s\n")
+  (define _format_h "       %-35s %10s %10s\n")
+  (define _format_d "   %3d) %-35s %10s %10s\n")
 
   (print
    (apply +
