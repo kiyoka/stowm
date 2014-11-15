@@ -14,14 +14,15 @@ Gem::Specification.new do |spec|
   spec.email = "kiyoka@sumibi.org"
   spec.executables = ["stowm"]
   spec.extra_rdoc_files = [
-    "README.md"
+    "README"
   ]
   spec.files = [
-    ".gemtest",
-    "README.md",
-    "bin/stowspec",
+    "README",
+    "bin/stowm",
     "lib/stowm",
     "lib/stowm/parseutil.nnd",
+    "lib/stowm/env.nnd",
+    "lib/stowm/util.nnd",
     "lib/stowm/version.rb",
     "lib/stowm.rb"
   ]

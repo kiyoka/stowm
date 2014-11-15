@@ -28,10 +28,10 @@ task :test do
 end
 
 task :go do
-  sh "nendo -I ./lib ./bin/stowm"
+  sh "./bin/stowm"
 end
 
 task :golist do
   sh "rm -f ~/.stowm.db"
-  sh "nendo -I ./lib ./bin/stowm list"
+  sh "./bin/stowm list"
 end
