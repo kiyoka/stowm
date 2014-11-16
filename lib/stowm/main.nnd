@@ -4,13 +4,13 @@
 (define (display-help)
   (print "")
   (print "Usage: ")
-  (print "  1. stowm enable   [proj]            ... enable  installed program. (rewtow -R)")
-  (print "     stowm enable   [num]             ... enable  installed program. (rewtow -R)")
-  (print "  2. stowm disable  [proj]            ... disable installed program. (rewtow -D)")
-  (print "     stowm disable  [num]             ... disable installed program. (rewtow -D)")
+  (print "  1. stowm enable   [num]             ... enable  installed program. (rewtow -R)")
+  (print "  2. stowm disable  [num]             ... disable installed program. (rewtow -D)")
   (print "  3. stowm install  [URL of tar.gz]   ... fetch, setup specfile, build program.")
   (print "  4. stowm install  tar.gz            ... setup specfile, build program.")
-  (print "  5. stowm list                       ... display installed program list.")
+  (print "  5. stowm restow   [proj]            ... restow installed program. (rewtow -R)")
+  (print "     stowm restow   [num]             ... rewtow installed program. (rewtow -R)")
+  (print "  6. stowm list     [proj]            ... display installed program list.")
   (print ""))
 
 
