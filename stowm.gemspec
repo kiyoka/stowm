@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
     "lib/stowm/parseutil.nnd",
     "lib/stowm/env.nnd",
     "lib/stowm/util.nnd",
+    "lib/stowm/main.nnd",
     "lib/stowm/version.rb",
     "lib/stowm.rb"
   ]

@@ -1,0 +1,171 @@
+;; #-*- mode: nendo; syntax: scheme -*-;;
+;; main program of stowm
+
+(define (display-help)
+  (print "")
+  (print "Usage: ")
+  (print "  1. stowm enable   [proj]            ... enable  installed program. (rewtow -R)")
+  (print "     stowm enable   [num]             ... enable  installed program. (rewtow -R)")
+  (print "  2. stowm disable  [proj]            ... disable installed program. (rewtow -D)")
+  (print "     stowm disable  [num]             ... disable installed program. (rewtow -D)")
+  (print "  3. stowm install  [URL of tar.gz]   ... fetch, setup specfile, build program.")
+  (print "  4. stowm install  tar.gz            ... setup specfile, build program.")
+  (print "  5. stowm list                       ... display installed program list.")
+  (print ""))
+
+
+(define (pickup-package path)
+  (cond
+   ((stowm-regex-match "/stow/([^/]+)" path)
+    => second)
+   (else
+    #f)))
+
+;; returns:
+;;   ( (package1 . symlink-file1) (package2 . symlink-file2) ... )
+(define (get-installed-alist local stow-home)
+  (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
+    (stowm-exec-sh script)
+    (with-open "/tmp/stowm.cache"
+               (lambda (f)
+                 (let* ((froms
+                         (map
+                          (lambda (line)
+                            (line.chomp))
+                          (f.readlines.to_list)))
+                        (link-alist
+                         (filter-map
+                          (lambda (fn)
+                            (let1 link (pickup-package (File.readlink fn))
+                              (and link
+                                   (cons link fn))))
+                          froms)))
+                   link-alist)))))
+
+
+(define (get-stowed-list home-repos stow-home link-alist)
+  (let* ((projs       (stowm-get-dir-entries home-repos))
+         (projs-hash  (apply hash-table eq?
+                             (map (lambda (x) (cons x #t))
+                                  projs)))
+         (stowed      (stowm-get-dir-entries stow-home))
+         (stowed-hash (apply hash-table eq?
+                             (map (lambda (x) (cons x #t))
+                                  stowed)))
+         (all         (sort (delete-duplicates (append projs stowed))))
+         (installed-hash (alist->hash-table link-alist)))
+    (map
+     (lambda (x cnt)
+       (cons x ;; package-name like "ruby-2.1.3"
+             (list
+              (if (hash-table-exist? stowed-hash x)
+                  (if (hash-table-exist? installed-hash x) 'i false) ;; installed?
+                  false)
+              (if (hash-table-exist? stowed-hash x) 's false)        ;; stowed?
+              (if (hash-table-exist? projs-hash  x) 'p false)        ;; exist in repos??
+              cnt)))
+     all
+     (range (length all)))))
+
+(define (save-installed-info env)
+  (let* ([link-alist  (get-installed-alist (local env) (stow-home env))]
+         [stowed-list (get-stowed-list (home-repos env) (stow-home env) link-alist]])
+    (printf "Info: rebuild [%s]\n" (db-path env))
+    (with-open (db-path env)
+               (lambda (f)
+                 (pretty-print stowed-list f))
+               "w"))
+  0)
+
+;; rebuild latest installed db info.
+(define (rebuild-installed-info env)
+  (when (or
+         (not (File.exist? (db-path env)))
+         (let ([stow-home-fs (File::Stat.new (stow-home env))]
+               [db-fs        (File::Stat.new (db-path env))])
+           (<
+            (db-fs.mtime.to_i)
+            (stow-home-fs.mtime.to_i))))
+    (save-installed-info env))
+  (with-open (db-path env)
+             (lambda (f)
+               (read f))))
+
+
+(define (stowed-list-to-tree lst)
+  (let1 program-hash (make-hash-table)
+    (for-each
+     (lambda (x)
+       (let1 _proj (proj (stowm-parse-url (first x)))  ;; like "ruby"
+         (hash-table-push! program-hash _proj x)))
+     (reverse lst))
+    (reverse (hash-table->alist program-hash))))
+
+(define (list-flat stowed-list)
+  (define (ox bool-val)
+    (if bool-val "O" "-"))
+  (define _format_h "       %-35s %10s %10s\n")
+  (define _format_d "   %3d) %-35s %10s %10s\n")
+
+  (print
+   (apply +
+          (cons
+           (sprintf _format_h "       <name>" "<enabled>" "<installed>")
+           (map
+            (lambda (tree)
+              (apply +
+                     (cons
+                      (sprintf " %s \n" (car tree))
+                      (map
+                       (lambda (x)
+                         (sprintf _format_d
+                                  (fifth x)
+                                  (+ " " (first x))
+                                  (ox (second x))
+                                  (ox (third x))))
+                       (cdr tree)))))
+            (stowed-list-to-tree stowed-list))))))
+
+
+(define (main argv)
+  ;; branch by argument
+  (let1 env (stowm-get-default-env)
+
+    ;; load dotfiles
+    (if (File.exist? (inifile-path env))
+        (load (inifile-path env)))
+    
+    ;; home-repos exist check
+    (if (not (Dir.exist? (home-repos env)))
+        (begin
+          (STDERR.printf "DError : repos dir [%s] nessesary to use stowm.\n" (home-repos env))
+          (exit 1)))
+
+    (let1 stowed-list (rebuild-installed-info env)
+
+      (case (length argv)
+        ((0)
+         (display-help)
+         0)
+        (else
+         (cond
+          ((stowm-regex-match #/^ena?b?l?e?$/      (car argv))
+           (action-by-keyword envs 'enable         (to-i (second argv))))
+          ((stowm-regex-match #/^dis?a?b?l?e?$/    (car argv))
+           (action-by-keyword envs 'disable        (to-i (second argv))))
+          ((stowm-regex-match #/^lis?t?$/          (car argv))
+           (list-flat stowed-list)
+           0)
+          (else
+           (display-help)
+           0)))))))
+
+;; ----------------------------------------
+;; utility for user's "specfile" file.
+;; ----------------------------------------
+(define stowspec nil)
+(define (define-stowspec alist)
+  (set! stowspec alist))
+(define uname 
+  (let1 f (IO.popen "uname" "r+")
+    f.readline.chop))
