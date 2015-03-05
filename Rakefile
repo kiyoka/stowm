@@ -22,16 +22,23 @@ task :test do
   sh "nendo -I ./lib  ./test/util-test.nnd                  >> test.log"
   sh "nendo -I ./lib  ./test/parseutil-test.nnd             >> test.log"
   sh "nendo -I ./lib  ./test/env-test.nnd                   >> test.log"
+  sh "nendo -I ./lib  ./test/listutil-test.nnd              >> test.log"
   sh "cat test.log"
   sh "cat test.record"
   sh "grep ' 0 failed, ' test.record  > /dev/null"
 end
 
-task :go do
+task :help do
   sh "./bin/stowm"
 end
 
-task :golist do
+task :cleanlist do
   sh "rm -f ~/.stowm.db"
   sh "./bin/stowm list"
+end
+
+task :list do
+  sh "./bin/stowm list"
+  sh "./bin/stowm list ruby"
+  sh "./bin/stowm list kyoto"
 end

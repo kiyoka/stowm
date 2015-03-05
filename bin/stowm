@@ -45,6 +45,7 @@ core.evalStr( <<";;END-OF-SCRIPT" )
 (use stowm.env)
 (use stowm.util)
 (use stowm.parseutil)
+(use stowm.listutil)
 (use stowm.main)
 
 (main *argv*)

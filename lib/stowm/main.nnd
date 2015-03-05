@@ -4,13 +4,13 @@
 (define (display-help)
   (print "")
   (print "Usage: ")
-  (print "  1. stowm enable   [num]             ... enable  installed program. (rewtow -R)")
-  (print "  2. stowm disable  [num]             ... disable installed program. (rewtow -D)")
-  (print "  3. stowm install  [URL of tar.gz]   ... fetch, setup specfile, build program.")
-  (print "  4. stowm install  tar.gz            ... setup specfile, build program.")
-  (print "  5. stowm restow   [proj]            ... restow installed program. (rewtow -R)")
-  (print "     stowm restow   [num]             ... rewtow installed program. (rewtow -R)")
-  (print "  6. stowm list     [proj]            ... display installed program list.")
+  (print "  1. stowm install   [num]             ... enable  installed program. (stow -R)")
+  (print "  2. stowm unisntall [num]             ... disable installed program. (stow -D)")
+  (print "  3. stowm           URL of tar.gz     ... fetch, setup specfile, build program.")
+  (print "  4. stowm           xxx.tar.gz        ... setup specfile, build program.")
+  (print "  5. stowm restow    [proj]            ... restow installed program. (stow -R)")
+  (print "     stowm restow    [num]             ... restow installed program. (stow -R)")
+  (print "  6. stowm list      [proj]            ... display installed program list.")
   (print ""))
 
 
@@ -21,7 +21,7 @@
    (else
     #f)))
 
-;; returns:
+;; return:
 ;;   ( (package1 . symlink-file1) (package2 . symlink-file2) ... )
 (define (get-installed-alist local stow-home)
   (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
@@ -42,7 +42,14 @@
                           froms)))
                    link-alist)))))
 
-
+;; return:
+;; (
+;;   ;; (package-name installed? stowed? exist in repos?)
+;;   (package1 i s p 0)
+;;   (package2 #f #f #f 0)
+;;    .
+;;    .
+;; )
 (define (get-stowed-list home-repos stow-home link-alist)
   (let* ((projs       (stowm-get-dir-entries home-repos))
          (projs-hash  (apply hash-table eq?
@@ -67,7 +74,8 @@
      all
      (range (length all)))))
 
-(define (save-installed-info env)
+;; rebuild ~/.stowm.db
+(define (save-installed-db env)
   (let* ([link-alist  (get-installed-alist (local env) (stow-home env))]
          [stowed-list (get-stowed-list (home-repos env) (stow-home env) link-alist]])
     (printf "Info: rebuild [%s]\n" (db-path env))
@@ -78,7 +86,7 @@
   0)
 
 ;; rebuild latest installed db info.
-(define (rebuild-installed-info env)
+(define (rebuild-installed-db env)
   (when (or
          (not (File.exist? (db-path env)))
          (let ([stow-home-fs (File::Stat.new (stow-home env))]
@@ -86,45 +94,107 @@
            (<
             (db-fs.mtime.to_i)
             (stow-home-fs.mtime.to_i))))
-    (save-installed-info env))
+    (save-installed-db env))
   (with-open (db-path env)
              (lambda (f)
                (read f))))
 
 
-(define (stowed-list-to-tree lst)
-  (let1 program-hash (make-hash-table)
-    (for-each
-     (lambda (x)
-       (let1 _proj (proj (stowm-parse-url (first x)))  ;; like "ruby"
-         (hash-table-push! program-hash _proj x)))
-     (reverse lst))
-    (reverse (hash-table->alist program-hash))))
 
-(define (list-flat stowed-list)
+(define (display-list stowed-list keyword)
   (define (ox bool-val)
     (if bool-val "O" "-"))
   (define _format_h "       %-35s %10s %10s\n")
   (define _format_d "   %3d) %-35s %10s %10s\n")
 
-  (print
-   (apply +
-          (cons
-           (sprintf _format_h "       <name>" "<enabled>" "<installed>")
-           (map
-            (lambda (tree)
-              (apply +
-                     (cons
-                      (sprintf " %s \n" (car tree))
-                      (map
-                       (lambda (x)
-                         (sprintf _format_d
-                                  (fifth x)
-                                  (+ " " (first x))
-                                  (ox (second x))
-                                  (ox (third x))))
-                       (cdr tree)))))
-            (stowed-list-to-tree stowed-list))))))
+  (let1 lst
+      (if keyword
+          (filter
+           (lambda (x)
+             (stowm-regex-match keyword (car x)))
+           (stowed-list-to-tree stowed-list))
+          (stowed-list-to-tree stowed-list))
+  
+    (print
+     (apply +
+            (cons
+             (sprintf _format_h "       <name>" "<enabled>" "<installed>")
+             (map
+              (lambda (tree)
+                (apply +
+                       (cons
+                        (sprintf " %s \n" (car tree))
+                        (map
+                         (lambda (x)
+                           (sprintf _format_d
+                                    (fifth x)
+                                    (+ " " (first x))
+                                    (ox (second x))
+                                    (ox (third x))))
+                         (cdr tree)))))
+              lst))))))
+
+
+(define (stowm-restow stow-home local target delete-item restow-item)
+  (let1 script (string-join
+                (list
+                 (sprintf "cd %s" target)
+                 (if (null? delete-item)
+                     ""
+                     (echo-str (sprintf "%s %s -D %s" (car stow-program) (cdr stow-program) (car delete-item))))
+                 (if (null? restow-item)
+                     ""
+                     (echo-str (sprintf "%s %s -R %s" (car stow-program) (cdr stow-program) (car restow-item))))
+                 "")
+                "\n")
+    (exec-sh script)
+    (save-installed-info stow-home local target)))
+
+(define (action-by-keyword envs keyword number)
+
+  (let* ((delete-action (equal? "uninstall" keyword))
+         (lst (get-installed-info envs))
+         ;; ----------
+         ;; search the number in list
+         ;; ----------
+         (found
+          (filter
+           (lambda (x)
+             (= number (sixth x)))
+           lst)))
+    (if (null? found)
+        (begin
+          (printf "Error: selected number [%d] was not found...\n" number)
+          (exit 1))
+        (let* ((basename (fifth (car found)))
+               (tree (stowed-list-to-tree lst))
+               (selection (assv-ref basename tree)))
+          (let ((delete-item
+                 (filter-map
+                  (lambda (x)
+                    (if (= 'i (second x))
+                        (car x)
+                        nil))
+                  selection))
+                (restow-item
+                 (filter-map
+                  (lambda (x)
+                    (if (and (= 's (third x))
+                             (= number (sixth x)))
+                        (car x)
+                        nil))
+                  selection)))
+            (cond
+             ((null? restow-item)
+              (printf "Error: selected number [%d] was not installed yet. \n" number)
+              (exit 1))
+             (delete-action
+              (stowm-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item '()))
+             ((equal? delete-item restow-item)
+              (printf "Info: restow [%s] again.\n" (car restow-item))
+              (stowm-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))
+             (else
+              (stowm-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))))))))
 
 
 (define (main argv)
@@ -138,10 +208,10 @@
     ;; home-repos exist check
     (if (not (Dir.exist? (home-repos env)))
         (begin
-          (STDERR.printf "DError : repos dir [%s] nessesary to use stowm.\n" (home-repos env))
+          (STDERR.printf "Error : repos dir [%s] nessesary to use stowm.\n" (home-repos env))
           (exit 1)))
 
-    (let1 stowed-list (rebuild-installed-info env)
+    (let1 stowed-list (rebuild-installed-db env)
 
       (case (length argv)
         ((0)
@@ -149,13 +219,16 @@
          0)
         (else
          (cond
-          ((stowm-regex-match #/^ena?b?l?e?$/      (car argv))
-           (action-by-keyword envs 'enable         (to-i (second argv))))
-          ((stowm-regex-match #/^dis?a?b?l?e?$/    (car argv))
-           (action-by-keyword envs 'disable        (to-i (second argv))))
-          ((stowm-regex-match #/^lis?t?$/          (car argv))
-           (list-flat stowed-list)
-           0)
+          ((stowm-regex-match #/^inst?a?l?l?$/      (car argv))
+           (action-by-keyword envs 'install         (to-i (second argv))))
+          ((stowm-regex-match #/^unin?s?t?a?l?l?$/  (car argv))
+           (action-by-keyword envs 'uninstall       (to-i (second argv))))
+          ((stowm-regex-match #/^lis?t?$/           (car argv))
+           (cond
+            ((< 1 (length argv))
+             (display-list stowed-list (second argv)))
+            (else
+             (display-list stowed-list #f))))
           (else
            (display-help)
            0)))))))
