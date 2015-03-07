@@ -32,6 +32,10 @@ task :help do
   sh "./bin/stowm"
 end
 
+task :env do
+  sh "./bin/stowm env"
+end
+
 task :cleanlist do
   sh "rm -f ~/.stowm.db"
   sh "./bin/stowm list"

@@ -11,6 +11,7 @@
   (print "  5. stowm restow    [proj]            ... restow installed program. (stow -R)")
   (print "     stowm restow    [num]             ... restow installed program. (stow -R)")
   (print "  6. stowm list      [proj]            ... display installed program list.")
+  (print "  7. stowm env                         ... display stowm environment.")
   (print ""))
 
 
@@ -93,7 +94,12 @@
                [db-fs        (File::Stat.new (db-path env))])
            (<
             (db-fs.mtime.to_i)
-            (stow-home-fs.mtime.to_i))))
+            (stow-home-fs.mtime.to_i)))
+         (let ((local-bin-fs (File::Stat.new (bin     env))]
+               [db-fs        (File::Stat.new (db-path env))])
+           (<
+            (db-fs.mtime.to_i)
+            (local-bin-fs.mtime.to_i))))
     (save-installed-db env))
   (with-open (db-path env)
              (lambda (f)
@@ -104,8 +110,8 @@
 (define (display-list stowed-list keyword)
   (define (ox bool-val)
     (if bool-val "O" "-"))
-  (define _format_h "       %-35s %10s %10s\n")
-  (define _format_d "   %3d) %-35s %10s %10s\n")
+  (define _format_h "        %-35s %11s %11s\n")
+  (define _format_d "   %3d) %-35s %11s %11s\n")
 
   (let1 lst
       (if keyword
@@ -219,6 +225,8 @@
          0)
         (else
          (cond
+          ((stowm-regex-match #/en?v?$/                (car argv))
+           (print (stowm-env-to-string env)))
           ((stowm-regex-match #/^in?s?t?a?l?l?$/       (car argv))
            (action-by-keyword envs 'install            (to-i (second argv))))
           ((stowm-regex-match #/^u?n?i?n?s?t?a?l?l?$/  (car argv))
