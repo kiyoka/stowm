@@ -11,6 +11,8 @@
                          ("tar[.]xz"    . xz)
                          ("tar[.][zZ]"  . z)))
 
+(define stowm-scheme-list '(http https ftp))
+
 (define stowm-rx-project-name "([a-zA-Z][a-zA-Z0-9]+)")
 (define stowm-rx-version      "(.+)")
 (define stowm-rx-ext          (+ "(" (string-join
@@ -54,10 +56,20 @@
         (first lst)
         #f)))
 
+(define (stowm-get-scheme-type scheme-string)
+  (if scheme-string
+      (let1 sym (string->symbol scheme-string)
+        (if (memq sym stowm-scheme-list)
+            sym
+            'unknown))
+      'empty))
+
+
 (define-record-type <parsed>
-  (parsed scheme host port path dir filename proj ver package ext arc-type)
+  (parsed scheme scheme-type host port path dir filename proj ver package ext arc-type)
   parsed?
   (scheme scheme)
+  (scheme-type scheme-type)
   (host host)
   (port port)
   (path path)
@@ -82,6 +94,7 @@
       (let1 fields (stowm-split-filename (second lst))
         (parsed
          url.scheme      ;; => "http"
+         (stowm-get-scheme-type url.scheme) ;; => 'http
          url.host        ;; => "www.example.com"
          url.port        ;; => 80
          url.path        ;; => "/xxx/yyy/aaaa-1.2.3.tar.gz"
@@ -95,3 +108,12 @@
          (or (third  fields) "");; => "tar.gz"
          (stowm-get-ext-type (or (third  fields) ""))
          )))))
+
+;; 
+(define (stowm-is-valid-url? url-string)
+  (let1 parsed (stowm-parse-url url-string)
+    (if (arc-type parsed)
+        (if (eq? 'unknown (scheme-type parsed))
+            #f
+            #t)
+        #f)))
