@@ -150,6 +150,7 @@
     (exec-sh script)
     (save-installed-info stow-home local target)))
 
+
 (define (action-by-keyword envs keyword number)
 
   (let* ((delete-action (equal? "uninstall" keyword))
@@ -196,7 +197,6 @@
              (else
               (stowm-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))))))))
 
-
 (define (main argv)
   ;; branch by argument
   (let1 env (stowm-get-default-env)
@@ -219,11 +219,14 @@
          0)
         (else
          (cond
-          ((stowm-regex-match #/^inst?a?l?l?$/      (car argv))
-           (action-by-keyword envs 'install         (to-i (second argv))))
-          ((stowm-regex-match #/^unin?s?t?a?l?l?$/  (car argv))
-           (action-by-keyword envs 'uninstall       (to-i (second argv))))
-          ((stowm-regex-match #/^lis?t?$/           (car argv))
+          ((stowm-regex-match #/^in?s?t?a?l?l?$/       (car argv))
+           (action-by-keyword envs 'install            (to-i (second argv))))
+          ((stowm-regex-match #/^u?n?i?n?s?t?a?l?l?$/  (car argv))
+           (action-by-keyword envs 'uninstall          (to-i (second argv))))
+          ((is-valid-url?                              (car argv))
+           ;; TODO: action by url
+           0)
+          ((stowm-regex-match #/^li?s??t?$/            (car argv))
            (cond
             ((< 1 (length argv))
              (display-list stowed-list (second argv)))

@@ -109,11 +109,13 @@
          (stowm-get-ext-type (or (third  fields) ""))
          )))))
 
-;; 
-(define (stowm-is-valid-url? url-string)
+(define (is-valid-url? url-string)
   (let1 parsed (stowm-parse-url url-string)
     (if (arc-type parsed)
         (if (eq? 'unknown (scheme-type parsed))
             #f
-            #t)
+            (if (< 0 (. (ver parsed) size))
+                #t
+                #f))
         #f)))
+  

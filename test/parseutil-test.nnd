@@ -319,53 +319,76 @@
           (ext  parsed)
           (arc-type  parsed))))
 
+;; Unknown format
+(test* "parse-url (9)" '(
+                         "."
+                         "bbbbbbbb.tar.gz"
+                         "bbbbbbbb"
+                         ""
+                         "tar.gz"
+                         gz)
+       (let1 parsed (stowm-parse-url "bbbbbbbb.tar.gz")
+         (list
+          (dir parsed)
+          (filename parsed)
+          (proj parsed)
+          (ver  parsed)
+          (ext  parsed)
+          (arc-type  parsed))))
+
+
 (test* "judgement (1)"
        #t
-       (stowm-is-valid-url? "aaaaaaaa-1.2.tar.gz"))
+       (is-valid-url? "aaaaaaaa-1.2.tar.gz"))
 
 (test* "judgement (2)"
        #t
-       (stowm-is-valid-url? "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0-preview1.tar.bz2"))
+       (is-valid-url? "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0-preview1.tar.bz2"))
 
 (test* "judgement (3)"
        #f
-       (stowm-is-valid-url? "install"))
+       (is-valid-url? "install"))
 
 (test* "judgement (4)"
        #f
-       (stowm-is-valid-url? "i"))
+       (is-valid-url? "i"))
 
 (test* "judgement (5)"
        #f
-       (stowm-is-valid-url? "100"))
+       (is-valid-url? "100"))
 
 ;; unknown scheme
 (test* "judgement (6)"
        #f
-       (stowm-is-valid-url? "xxx://hostname/src-1.2.tar.gz"))
+       (is-valid-url? "xxx://hostname/src-1.2.tar.gz"))
 
 ;; known scheme
 (test* "judgement (7)"
        #t
-       (stowm-is-valid-url? "http://hostname/src-1.2.tar.gz"))
+       (is-valid-url? "http://hostname/src-1.2.tar.gz"))
 
 ;; known scheme
 (test* "judgement (8)"
        #t
-       (stowm-is-valid-url? "https://hostname/src-1.2.tar.gz"))
+       (is-valid-url? "https://hostname/src-1.2.tar.gz"))
 
 ;; known scheme
 (test* "judgement (9)"
        #t
-       (stowm-is-valid-url? "ftp://hostname/src-1.2.tar.gz"))
+       (is-valid-url? "ftp://hostname/src-1.2.tar.gz"))
 
 (test* "judgement (10)"
        #t
-       (stowm-is-valid-url? "/usr/src/src-1.2.tar.gz"))
+       (is-valid-url? "/usr/src/src-1.2.tar.gz"))
 
 (test* "judgement (11)"
        #t
-       (stowm-is-valid-url? "src-1.2.tar.gz"))
+       (is-valid-url? "src-1.2.tar.gz"))
+
+;; unknown basename format.
+(test* "judgement (12)"
+       #f
+       (is-valid-url? "bbbbbbbb.tar.gz"))
 
 
 ;;===================================================================
