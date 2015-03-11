@@ -22,29 +22,32 @@ Display Format
 Specfile (yaml format)
 ---------------------------------
 
-# example of ruby-2.1.3
+    # example of ruby-2.1.3
 
-configure:
- - ./configure/shellscript
-
-make:
- - make
-
-install:
- - make install
-
-arc:
- - ruby-2.1.3.tar.gz
-
-url: 
- - http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.3.tar.gz
-
-projname:
- - ruby-2.1.3
+    fetch:
+     - wget http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.3.tar.gz -O ruby-2.1.3.tar.gz
+    
+    configure:
+     - ./configure/shellscript
+    
+    make:
+     - make
+    
+    install:
+     - make install
+    
+    arc:
+     - ruby-2.1.3.tar.gz
+    
+    url: 
+     - http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.3.tar.gz
+    
+    projname:
+     - ruby-2.1.3
 
 Shell Script
 ---------------------------
-Specfile can link forign shell script file
+"fetch" and "configure" and "make" and "install" target can specify forign shell script file.
 
 # [./configure/shellscript]
 
