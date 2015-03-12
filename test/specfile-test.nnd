@@ -1,0 +1,66 @@
+;;-*- mode: nendo; syntax: scheme -*-;;
+;;
+;; specfile-test.nnd - test suite for specfile
+;;  
+;;   Copyright (c) 2014  Kiyoka Nishiyama  <kiyoka@sumibi.org>
+;;   
+;;   Redistribution and use in source and binary forms, with or without
+;;   modification, are permitted provided that the following conditions
+;;   are met:
+;;   
+;;   1. Redistributions of source code must retain the above copyright
+;;      notice, this list of conditions and the following disclaimer.
+;;  
+;;   2. Redistributions in binary form must reproduce the above copyright
+;;      notice, this list of conditions and the following disclaimer in the
+;;      documentation and/or other materials provided with the distribution.
+;;  
+;;   3. Neither the name of the authors nor the names of its contributors
+;;      may be used to endorse or promote products derived from this
+;;      software without specific prior written permission.
+;;  
+;;   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+;;   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+;;   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+;;   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+;;   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+;;   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+;;   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+;;   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+;;   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+;;   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+;;   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+(use nendo.test)
+(test-start "parseutil")
+
+;;===================================================================
+;;-------------------------------------------------------------------
+(test-section "specfile")
+(use stowm.util)
+(use stowm.parseutil)
+(use stowm.specfile)
+(test-module 'specfile)
+
+(test* "create-specfile ()"
+"---
+fetch: wget http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.gz -O ruby-2.2.0.tar.gz
+configure: |
+  if [ ! -e ./configure ] ; then
+    echo 'Error: stowm supports ./configure included-tarball only, sorry...'
+    exit 1
+  fi
+  command='./configure --prefix=/usr/local/stow/ruby-2.2.0'
+make: make
+install: make install
+url: http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.gz
+projname: ruby-2.2.0
+"
+       (create-specfile
+        "/usr/local/stow"
+        "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.gz")
+)
+
+;;===================================================================
+(test-end)

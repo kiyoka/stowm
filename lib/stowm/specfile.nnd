@@ -1,0 +1,43 @@
+;; #-*- mode: nendo; syntax: scheme -*-;;
+;; specfile util functions
+
+(use rfc.yaml)
+
+;; create specfile as yaml.
+;; url: url arg must be validated.
+;; return
+;; ("yamlfile image"
+;;  (( "filename of shellscript" . "shellscript image"))
+;; )
+(define (create-specfile stow-home url)
+  (let* ([parsed (stowm-parse-url url)]
+         [fetchable (not (eq? 'empty (scheme-type parsed)))]
+         [tree
+          `(
+            ("fetch" . ,(if fetchable
+                          (sprintf "wget %s -O %s" url (filename parsed))
+                          #f))
+            
+            ("configure" . ,(sprintf "if [ ! -e ./configure ] ; then
+  echo 'Error: stowm supports ./configure included-tarball only, sorry...'
+  exit 1
+fi
+command='./configure --prefix=%s/%s'
+"
+                                   stow-home
+                                   (package parsed)))
+            ("make" . "make")
+            ("install" . "make install")
+            ("url" . ,url)
+            ("projname" . ,(package parsed)))])
+    
+    (construct-yaml-string tree)))
+
+
+
+
+                             
+            
+ 
+     
+        
