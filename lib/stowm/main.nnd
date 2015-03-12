@@ -157,10 +157,32 @@
     (save-installed-info stow-home local target)))
 
 
-(define (action-by-keyword envs keyword number)
+(define (action-by-url env url)
+  (let* ([parsed (stowm-parse-url url)]
+         [specfile-str
+          (create-specfile (stow-home env) url)]
+         [specfile-dir
+          (+ (home-repos env) "/" (package parsed))]
+         [specfile-path
+          (+ specfile-dir "/" (package parsed) ".yml")])
+
+    ;; create directory
+    (when (not (File.exist? specfile-dir))
+      (Dir.mkdir specfile-dir))
+
+    ;; save specfile
+    (with-open
+     specfile-path
+     (lambda (f)
+       (f.printf "%s" specfile-str)
+       (STDERR.printf "Info : created spec [%s] \n" specfile-path))
+     "w")))
+
+
+(define (action-by-keyword env keyword number)
 
   (let* ((delete-action (equal? "uninstall" keyword))
-         (lst (get-installed-info envs))
+         (lst (get-installed-info env))
          ;; ----------
          ;; search the number in list
          ;; ----------
@@ -196,12 +218,12 @@
               (printf "Error: selected number [%d] was not installed yet. \n" number)
               (exit 1))
              (delete-action
-              (stowm-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item '()))
+              (stowm-restow (assq-ref 'stow-home env) (assq-ref 'local env) (assq-ref 'target env) delete-item '()))
              ((equal? delete-item restow-item)
               (printf "Info: restow [%s] again.\n" (car restow-item))
-              (stowm-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))
+              (stowm-restow (assq-ref 'stow-home env) (assq-ref 'local env) (assq-ref 'target env) delete-item restow-item))
              (else
-              (stowm-restow (assq-ref 'stow-home envs) (assq-ref 'local envs) (assq-ref 'target envs) delete-item restow-item))))))))
+              (stowm-restow (assq-ref 'stow-home env) (assq-ref 'local env) (assq-ref 'target env) delete-item restow-item))))))))
 
 (define (main argv)
   ;; branch by argument
@@ -228,12 +250,11 @@
           ((stowm-regex-match #/en?v?$/                (car argv))
            (print (stowm-env-to-string env)))
           ((stowm-regex-match #/^in?s?t?a?l?l?$/       (car argv))
-           (action-by-keyword envs 'install            (to-i (second argv))))
+           (action-by-keyword env 'install            (to-i (second argv))))
           ((stowm-regex-match #/^u?n?i?n?s?t?a?l?l?$/  (car argv))
-           (action-by-keyword envs 'uninstall          (to-i (second argv))))
+           (action-by-keyword env 'uninstall          (to-i (second argv))))
           ((is-valid-url?                              (car argv))
-           ;; TODO: action by url
-           0)
+           (action-by-url env (car argv)))
           ((stowm-regex-match #/^li?s??t?$/            (car argv))
            (cond
             ((< 1 (length argv))

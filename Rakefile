@@ -47,3 +47,7 @@ task :list do
   sh "./bin/stowm list ruby"
   sh "./bin/stowm list kyoto"
 end
+
+task :url do
+  sh "./bin/stowm https://www.kernel.org/pub/software/scm/git/git-2.1.3.tar.xz"
+end
