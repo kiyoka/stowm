@@ -171,12 +171,14 @@
       (Dir.mkdir specfile-dir))
 
     ;; save specfile
-    (with-open
-     specfile-path
-     (lambda (f)
-       (f.printf "%s" specfile-str)
-       (STDERR.printf "Info : created spec [%s] \n" specfile-path))
-     "w")))
+    (if (File.exist? specfile-path)
+        (STDERR.printf "Info : alreay exist [%s] file. didn't touch.\n" specfile-path)
+        (with-open
+         specfile-path
+         (lambda (f)
+           (f.printf "%s" specfile-str)
+           (STDERR.printf "Info : created spec [%s] \n" specfile-path))
+         "w"))))
 
 
 (define (action-by-keyword env keyword number)
