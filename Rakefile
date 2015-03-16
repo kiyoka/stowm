@@ -49,5 +49,5 @@ task :list do
 end
 
 task :url do
-  sh "./bin/stowm https://www.kernel.org/pub/software/scm/git/git-2.1.3.tar.xz"
+  sh "./bin/stowm https://www.kernel.org/pub/software/scm/git/git-2.1.3.tar.gz"
 end

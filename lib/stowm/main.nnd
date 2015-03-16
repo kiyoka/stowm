@@ -1,6 +1,8 @@
 ;; #-*- mode: nendo; syntax: scheme -*-;;
 ;; main program of stowm
 
+(require "fileutils")
+
 (define (display-help)
   (print "")
   (print "Usage: ")
@@ -26,7 +28,7 @@
 ;;   ( (package1 . symlink-file1) (package2 . symlink-file2) ... )
 (define (get-installed-alist local stow-home)
   (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
-    (stowm-exec-sh script)
+    (stowm-exec-sh script #f)
     (with-open "/tmp/stowm.cache"
                (lambda (f)
                  (let* ((froms
@@ -157,6 +159,7 @@
     (save-installed-info stow-home local target)))
 
 
+;; action by url
 (define (action-by-url env url)
   (let* ([parsed (stowm-parse-url url)]
          [specfile-str
@@ -164,11 +167,18 @@
          [specfile-dir
           (+ (home-repos env) "/" (package parsed))]
          [specfile-path
-          (+ specfile-dir "/" (package parsed) ".yml")])
-
+          (+ specfile-dir "/" (package parsed) ".yml")]
+         [makefile-dir
+          (+ (temp env) "/" (package parsed))]
+         [makefile-path
+          (+ makefile-dir "/Makefile.tmp")])
+    
     ;; create directory
     (when (not (File.exist? specfile-dir))
-      (Dir.mkdir specfile-dir))
+      (FileUtils.mkdir_p specfile-dir))
+
+    (when (not (File.exist? makefile-dir))
+      (FileUtils.mkdir_p makefile-dir))
 
     ;; save specfile
     (if (File.exist? specfile-path)
@@ -178,7 +188,24 @@
          (lambda (f)
            (f.printf "%s" specfile-str)
            (STDERR.printf "Info : created spec [%s] \n" specfile-path))
-         "w"))))
+         "w"))
+
+    ;; load exist specfile
+    (let* ([spec-obj
+            (cond
+             ((File.exist? specfile-path)
+              (load-specfile specfile-path))
+             (else
+              (STDERR.printf "Error : not exist specfile [%s].")
+              (exit 1)))]
+           [makefile-str
+            (create-makefile spec-obj (home-repos env))])
+      (with-open
+       makefile-path
+       (lambda (f)
+         (f.printf "%s" makefile-str)
+         (STDERR.printf "Info : created Makefile [%s] \n" makefile-path))
+       "w"))))
 
 
 (define (action-by-keyword env keyword number)

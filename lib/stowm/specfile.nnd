@@ -67,12 +67,9 @@
                         projname
                         filename
                         filename))
-           (sprintf "clean:\n	/bin/rm -f ./%s"
+           (sprintf "clean:\n	/bin/rm -f ./%s\n"
                     projname))])
     (string-join
      strings
      "\n\n")))
-      
- 
-     
-        
+
