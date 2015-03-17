@@ -72,7 +72,7 @@ ruby-2.1.3.tar.gz :
 \t/bin/cp /home/aaaa/stowm/ruby-2.1.3/ruby-2.1.3.tar.gz ruby-2.1.3.tar.gz
 
 clean:
-\t/bin/rm -f ./ruby-2.1.3
+\t/bin/rm -rf ./ruby-2.1.3
 "
        (create-makefile
         '(
@@ -98,7 +98,7 @@ ruby-2.2.0.tar.gz :
 \twget http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.gz -O ruby-2.2.0.tar.gz
 
 clean:
-\t/bin/rm -f ./ruby-2.2.0
+\t/bin/rm -rf ./ruby-2.2.0
 "
        (create-makefile
         '(

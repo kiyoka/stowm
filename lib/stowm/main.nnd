@@ -155,7 +155,7 @@
                      (echo-str (sprintf "%s %s -R %s" (car stow-program) (cdr stow-program) (car restow-item))))
                  "")
                 "\n")
-    (exec-sh script)
+    (stowm-exec-sh script)
     (save-installed-info stow-home local target)))
 
 
@@ -200,12 +200,19 @@
               (exit 1)))]
            [makefile-str
             (create-makefile spec-obj (home-repos env))])
+
+      ;; save Makefile.tmp
       (with-open
        makefile-path
        (lambda (f)
          (f.printf "%s" makefile-str)
          (STDERR.printf "Info : created Makefile [%s] \n" makefile-path))
-       "w"))))
+       "w")
+
+      (let1 script (+
+                    (sprintf "make -C %s -f Makefile.tmp clean\n" makefile-dir)
+                    (sprintf "make -C %s -f Makefile.tmp\n"       makefile-dir))
+        (stowm-exec-sh script)))))
 
 
 (define (action-by-keyword env keyword number)
