@@ -43,11 +43,17 @@ task :cleanlist do
 end
 
 task :list do
-  sh "./bin/stowm list"
-  sh "./bin/stowm list ruby"
-  sh "./bin/stowm list kyoto"
+  sh "./bin/stowm list git"
 end
 
 task :url do
-  sh "./bin/stowm http://cache.ruby-lang.org/pub/ruby/2.0/ruby-2.0.0-p643.tar.gz"
+  sh "./bin/stowm https://www.kernel.org/pub/software/scm/git/git-2.3.3.tar.gz"
+end
+
+task :i do
+  sh "./bin/stowm i 19"
+end
+
+task :u do
+  sh "./bin/stowm u 19"
 end

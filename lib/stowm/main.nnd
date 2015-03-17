@@ -142,21 +142,25 @@
                          (cdr tree)))))
               lst))))))
 
+(define (stowm-stderr-tee str)
+  (STDERR.printf "Info: %s\n" str)
+  str)
 
-(define (stowm-restow stow-home local target delete-item restow-item)
+
+(define (stowm-restow env delete-item restow-item)
   (let1 script (string-join
                 (list
-                 (sprintf "cd %s" target)
+                 (+ "cd " (stow-home env))
                  (if (null? delete-item)
                      ""
-                     (echo-str (sprintf "%s %s -D %s" (car stow-program) (cdr stow-program) (car delete-item))))
+                     (stowm-stderr-tee (sprintf "%s -D %s" (stow-program env) (car delete-item))))
                  (if (null? restow-item)
                      ""
-                     (echo-str (sprintf "%s %s -R %s" (car stow-program) (cdr stow-program) (car restow-item))))
+                     (stowm-stderr-tee (sprintf "%s -R %s" (stow-program env) (car restow-item))))
                  "")
                 "\n")
-    (stowm-exec-sh script)
-    (save-installed-info stow-home local target)))
+    (stowm-exec-sh script #f)
+    (save-installed-db env)))
 
 
 ;; action by url
@@ -215,25 +219,25 @@
         (stowm-exec-sh script)))))
 
 
-(define (action-by-keyword env keyword number)
+(define (action-by-keyword env keyword number stowed-list)
 
-  (let* ((delete-action (equal? "uninstall" keyword))
-         (lst (get-installed-info env))
+  (let* ([delete-action (eqv? 'uninstall keyword)]
          ;; ----------
          ;; search the number in list
          ;; ----------
          (found
           (filter
            (lambda (x)
-             (= number (sixth x)))
-           lst)))
+             (= number (fifth x)))
+           stowed-list)))
     (if (null? found)
         (begin
-          (printf "Error: selected number [%d] was not found...\n" number)
+          (STDERR.printf "Error: selected number [%d] was not found...\n" number)
           (exit 1))
-        (let* ((basename (fifth (car found)))
-               (tree (stowed-list-to-tree lst))
-               (selection (assv-ref basename tree)))
+        (let* ([dirname (caar found)]
+               [basename (car (stowm-split-filename dirname))]
+               [tree (stowed-list-to-tree stowed-list)]
+               [selection (assv-ref basename tree)])
           (let ((delete-item
                  (filter-map
                   (lambda (x)
@@ -245,21 +249,21 @@
                  (filter-map
                   (lambda (x)
                     (if (and (= 's (third x))
-                             (= number (sixth x)))
+                             (= number (fifth x)))
                         (car x)
                         nil))
                   selection)))
             (cond
              ((null? restow-item)
-              (printf "Error: selected number [%d] was not installed yet. \n" number)
+              (STDERR.printf "Error: selected number [%d] was not installed yet. \n" number)
               (exit 1))
              (delete-action
-              (stowm-restow (assq-ref 'stow-home env) (assq-ref 'local env) (assq-ref 'target env) delete-item '()))
+              (stowm-restow env delete-item '()))
              ((equal? delete-item restow-item)
-              (printf "Info: restow [%s] again.\n" (car restow-item))
-              (stowm-restow (assq-ref 'stow-home env) (assq-ref 'local env) (assq-ref 'target env) delete-item restow-item))
+              (STDERR.printf "Info: restow [%s] again.\n" (car restow-item))
+              (stowm-restow env delete-item restow-item))
              (else
-              (stowm-restow (assq-ref 'stow-home env) (assq-ref 'local env) (assq-ref 'target env) delete-item restow-item))))))))
+              (stowm-restow env delete-item restow-item))))))))
 
 (define (main argv)
   ;; branch by argument
@@ -286,9 +290,9 @@
           ((stowm-regex-match #/en?v?$/                (car argv))
            (print (stowm-env-to-string env)))
           ((stowm-regex-match #/^in?s?t?a?l?l?$/       (car argv))
-           (action-by-keyword env 'install            (to-i (second argv))))
+           (action-by-keyword env 'install            (to-i (second argv)) stowed-list))
           ((stowm-regex-match #/^u?n?i?n?s?t?a?l?l?$/  (car argv))
-           (action-by-keyword env 'uninstall          (to-i (second argv))))
+           (action-by-keyword env 'uninstall          (to-i (second argv)) stowed-list))
           ((is-valid-url?                              (car argv))
            (action-by-url env (car argv)))
           ((stowm-regex-match #/^li?s??t?$/            (car argv))
