@@ -14,21 +14,24 @@ Gem::Specification.new do |spec|
   spec.email = "kiyoka@sumibi.org"
   spec.executables = ["stowm"]
   spec.extra_rdoc_files = [
-    "README"
+    "README.md"
   ]
   spec.files = [
-    "README",
+    "README.md",
     "bin/stowm",
     "lib/stowm",
+    "lib/stowm/specfile.nnd",
     "lib/stowm/parseutil.nnd",
+    "lib/stowm/main.nnd",
+    "lib/stowm/listutil.nnd",
     "lib/stowm/env.nnd",
     "lib/stowm/util.nnd",
-    "lib/stowm/main.nnd",
     "lib/stowm/version.rb",
     "lib/stowm.rb"
   ]
   spec.homepage = "http://github.com/kiyoka/stowm"
   spec.licenses = ["New BSD"]
   spec.summary  = "Stowm is a stow manager."
+  spec.add_dependency "nendo", "= 0.7.3"
 end
 
