@@ -6,14 +6,15 @@
 (define (display-help)
   (print "")
   (print "Usage: ")
-  (print "  1. stowm install   [num]             ... enable  installed program. (stow -R)")
-  (print "  2. stowm unisntall [num]             ... disable installed program. (stow -D)")
-  (print "  3. stowm           URL of tar.gz     ... fetch, setup specfile, build program.")
-  (print "  4. stowm           xxx.tar.gz        ... setup specfile, build program.")
-  (print "  5. stowm restow    [proj]            ... restow installed program. (stow -R)")
-  (print "     stowm restow    [num]             ... restow installed program. (stow -R)")
-  (print "  6. stowm list      [proj]            ... display installed program list.")
-  (print "  7. stowm env                         ... display stowm environment.")
+  (print "  1. stowm           URL of tar.gz     ... fetch, generate specfile, build, install program.")
+  (print "     stowm           xxx.tar.gz        ...        generate specfile, build, install program.")
+  (print "  2. stowm list      [proj]            ... display installed program list.")
+  (print "  3. stowm enable    [num]             ... enable  installed program. (stow -R)")
+  (print "     stowm enable    [proj]            ... enable  installed program by name. (stow -D & stow -R)")
+  (print "  4. stowm disable   [num]             ... disable installed program. (stow -D)")
+  (print "     stowm disable   [proj]            ... disalbe installed program by name. (stow -D)")
+  (print "     stowm rebuild   [num]             ... rebuild program. (create Makefile.tmp again)")
+  (print "  5 stowm env                         ... display stowm environment.")
   (print ""))
 
 
@@ -69,10 +70,10 @@
        (cons x ;; package-name like "ruby-2.1.3"
              (list
               (if (hash-table-exist? stowed-hash x)
-                  (if (hash-table-exist? installed-hash x) 'i false) ;; installed?
+                  (if (hash-table-exist? installed-hash x) 'e false) ;; enabled?
                   false)
-              (if (hash-table-exist? stowed-hash x) 's false)        ;; stowed?
-              (if (hash-table-exist? projs-hash  x) 'p false)        ;; exist in repos??
+              (if (hash-table-exist? stowed-hash x) 'i false)        ;; installed to stow directory?
+              (if (hash-table-exist? projs-hash  x) 's false)        ;; exist specfile?
               cnt)))
      all
      (range (length all)))))
@@ -163,6 +164,28 @@
     (save-installed-db env)))
 
 
+;; build the package
+(define (build-package env spec-obj makefile-dir)
+  (let* (
+         [makefile-path
+          (+ makefile-dir "/Makefile.tmp")]
+         [makefile-str
+          (create-makefile spec-obj (home-repos env))])
+
+    ;; save Makefile.tmp and build
+    (with-open
+     makefile-path
+     (lambda (f)
+       (f.printf "%s" makefile-str)
+       (STDERR.printf "Info : created Makefile [%s] \n" makefile-path))
+     "w")
+    
+    (let1 script (+
+                  (sprintf "make -C %s -f Makefile.tmp clean\n" makefile-dir)
+                  (sprintf "make -C %s -f Makefile.tmp\n"       makefile-dir))
+      (stowm-exec-sh script))))
+
+
 ;; action by url
 (define (action-by-url env url)
   (let* ([parsed (stowm-parse-url url)]
@@ -173,9 +196,7 @@
          [specfile-path
           (+ specfile-dir "/" (package parsed) ".yml")]
          [makefile-dir
-          (+ (temp env) "/" (package parsed))]
-         [makefile-path
-          (+ makefile-dir "/Makefile.tmp")])
+          (+ (temp env) "/" (package parsed))])
     
     ;; create directory
     (when (not (File.exist? specfile-dir))
@@ -195,33 +216,27 @@
          "w"))
 
     ;; load exist specfile
-    (let* ([spec-obj
-            (cond
-             ((File.exist? specfile-path)
-              (load-specfile specfile-path))
-             (else
-              (STDERR.printf "Error : not exist specfile [%s].")
-              (exit 1)))]
-           [makefile-str
-            (create-makefile spec-obj (home-repos env))])
-
-      ;; save Makefile.tmp
-      (with-open
-       makefile-path
-       (lambda (f)
-         (f.printf "%s" makefile-str)
-         (STDERR.printf "Info : created Makefile [%s] \n" makefile-path))
-       "w")
-
-      (let1 script (+
-                    (sprintf "make -C %s -f Makefile.tmp clean\n" makefile-dir)
-                    (sprintf "make -C %s -f Makefile.tmp\n"       makefile-dir))
-        (stowm-exec-sh script)))))
+    (let1 spec-obj
+        (cond
+         ((File.exist? specfile-path)
+          (load-specfile specfile-path))
+         (else
+          (STDERR.printf "Error : not exist specfile [%s].")
+          (exit 1)))
+      (build-package env spec-obj makefile-dir))))
 
 
-(define (action-by-keyword env keyword number stowed-list)
 
-  (let* ([delete-action (eqv? 'uninstall keyword)]
+;;(define (action-by-keyword-name env keyword name stowed-list)
+;;  ;; resolve program number by name
+;;  (let1 tree (stowed-list-to-tree stowed-list)
+;;    [selection (assv-ref basename tree)]
+    
+
+  
+(define (action-by-keyword-num env keyword number stowed-list)
+
+  (let* ([delete-action (eqv? 'disable keyword)]
          ;; ----------
          ;; search the number in list
          ;; ----------
@@ -241,14 +256,14 @@
           (let ((delete-item
                  (filter-map
                   (lambda (x)
-                    (if (= 'i (second x))
+                    (if (= 'e (second x)) ;; enabled?
                         (car x)
                         nil))
                   selection))
                 (restow-item
                  (filter-map
                   (lambda (x)
-                    (if (and (= 's (third x))
+                    (if (and (= 'i (third x)) ;; installed?
                              (= number (fifth x)))
                         (car x)
                         nil))
@@ -287,12 +302,12 @@
          0)
         (else
          (cond
-          ((stowm-regex-match #/en?v?$/                (car argv))
+          ((stowm-regex-match #/env/                   (car argv))
            (print (stowm-env-to-string env)))
-          ((stowm-regex-match #/^in?s?t?a?l?l?$/       (car argv))
-           (action-by-keyword env 'install            (to-i (second argv)) stowed-list))
-          ((stowm-regex-match #/^u?n?i?n?s?t?a?l?l?$/  (car argv))
-           (action-by-keyword env 'uninstall          (to-i (second argv)) stowed-list))
+          ((stowm-regex-match #/en?a?b?l?e?/           (car argv))
+           (action-by-keyword-num env 'enable          (to-i (second argv)) stowed-list))
+          ((stowm-regex-match #/di?s?a?b?l?e?/         (car argv))
+           (action-by-keyword-num env 'disable         (to-i (second argv)) stowed-list))
           ((is-valid-url?                              (car argv))
            (action-by-url env (car argv)))
           ((stowm-regex-match #/^li?s??t?$/            (car argv))

@@ -50,10 +50,10 @@ task :url do
   sh "./bin/stowm https://www.kernel.org/pub/software/scm/git/git-2.3.3.tar.gz"
 end
 
-task :i do
-  sh "./bin/stowm i 19"
+task :e do
+  sh "./bin/stowm e 19"
 end
 
-task :u do
-  sh "./bin/stowm u 19"
+task :d do
+  sh "./bin/stowm d 19"
 end

@@ -12,3 +12,29 @@
          (hash-table-push! program-hash _proj x)))
      (reverse lst))
     (reverse (hash-table->alist program-hash))))
+
+
+;; proj is like "ruby"
+;; sym are ( i or s or p )
+;; return: index number, #f is not found
+(define (resolve-program-number proj sym tree)
+  (let1 lst (assv-ref #?=proj #?=tree)
+    (cond
+     (lst
+      (let1 filtered
+          (filter-map
+           (lambda (x)
+             (if (or (eq? (second x) sym)
+                     (eq? (third  x) sym)
+                     (eq? (fourth x) sym))
+                 (fifth x)
+                 #f))
+           #?=lst)
+        (if (< 0 (length #?=filtered))
+            ;; found
+            (car filtered)
+            ;; not found
+            #f)))
+     (else
+      ;; not found
+      #f))))

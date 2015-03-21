@@ -47,27 +47,52 @@
 (test* "grouping (1)"
        '(
          ("emacs"
-          ("emacs-24.3" #f s p 35)
-          ("emacs-24.4" i s p 36))
+          ("emacs-24.3" #f i s 35)
+          ("emacs-24.4" e i s 36))
          ("ruby"
-          ("ruby-2.1.3" #f s p 115)
-          ("ruby-2.2.0" i s #f 116)))
+          ("ruby-2.1.3" #f i s 115)
+          ("ruby-2.2.0" e i #f 116)))
        (stowed-list-to-tree
         '(
-          ("emacs-24.3" #f s p 35)
-          ("emacs-24.4" i s p 36)
-          ("ruby-2.1.3" #f s p 115)
-          ("ruby-2.2.0" i s #f 116))))
+          ("emacs-24.3" #f i s 35)
+          ("emacs-24.4" e i s 36)
+          ("ruby-2.1.3" #f i s 115)
+          ("ruby-2.2.0" e i #f 116))))
 
 (test* "grouping (2)"
        '("emacs" "ruby")
        (map car 
             (stowed-list-to-tree
              '(
-               ("emacs-24.3" #f s p 35)
-               ("emacs-24.4" i s p 36)
-               ("ruby-2.1.3" #f s p 115)
-               ("ruby-2.2.0" i s #f 116)))))
+               ("emacs-24.3" #f i s 35)
+               ("emacs-24.4" e i s 36)
+               ("ruby-2.1.3" #f i s 115)
+               ("ruby-2.2.0" e i #f 116)))))
+
+(test* "resolve program number (1)"
+       116
+       (resolve-program-number "ruby"
+                               'e
+                               '(
+                                 ("emacs"
+                                  ("emacs-24.3" #f i s 35)
+                                  ("emacs-24.4" e i s 36))
+                                 ("ruby"
+                                  ("ruby-2.1.3" #f i s 115)
+                                  ("ruby-2.2.0" e i #f 116)))))
+
+(test* "resolve program number (2)"
+       115
+       (resolve-program-number "ruby"
+                               's
+                               '(
+                                 ("emacs"
+                                  ("emacs-24.3" #f i s 35)
+                                  ("emacs-24.4" e i s 36))
+                                 ("ruby"
+                                  ("ruby-2.1.3" #f i s 115)
+                                  ("ruby-2.2.0" e i #f 116)))))
+
 
 ;;===================================================================
 (test-end)
