@@ -161,7 +161,10 @@
                  "")
                 "\n")
     (stowm-exec-sh script #f)
-    (save-installed-db env)))
+    (save-installed-db env)
+    (with-open (db-path env)
+               (lambda (f)
+                 (read f)))))
 
 
 ;; build the package
@@ -227,11 +230,30 @@
 
 
 
-;;(define (action-by-keyword-name env keyword name stowed-list)
-;;  ;; resolve program number by name
-;;  (let1 tree (stowed-list-to-tree stowed-list)
-;;    [selection (assv-ref basename tree)]
-    
+(define (action-by-keyword-name env keyword name stowed-list)
+  ;; resolve program number by name
+  (let1 tree (stowed-list-to-tree stowed-list)
+    (cond
+     ((eqv? 'enable keyword)
+      (let1 num
+          (resolve-program-number name 'e tree)
+        (if num
+            ;; restow already enabled one
+            (action-by-keyword-num env 'enable num stowed-list)
+            (begin
+              (STDERR.printf "Error: package [%s] was not stowed yet.\n" name)
+              (display-help)
+              (exit 1)))))
+     ((eqv? 'disable keyword)
+      (let1 num
+          (resolve-program-number name 'e tree)
+        (if num
+            ;; disable already enabled one
+            (action-by-keyword-num env 'disable num stowed-list)
+            (begin
+              (STDERR.printf "Error: selected package [%s] was not enabled.\n" name)
+              (display-help)
+              (exit 1))))))))
 
   
 (define (action-by-keyword-num env keyword number stowed-list)
@@ -273,12 +295,15 @@
               (STDERR.printf "Error: selected number [%d] was not installed yet. \n" number)
               (exit 1))
              (delete-action
-              (stowm-restow env delete-item '()))
+              (let1 lst (stowm-restow env delete-item '())
+                (display-list lst basename)))
              ((equal? delete-item restow-item)
-              (STDERR.printf "Info: restow [%s] again.\n" (car restow-item))
-              (stowm-restow env delete-item restow-item))
+              (STDERR.printf "Info: restow [%s].\n" (car restow-item))
+              (let1 lst (stowm-restow env delete-item restow-item)
+                (display-list lst basename)))
              (else
-              (stowm-restow env delete-item restow-item))))))))
+              (let1 lst (stowm-restow env delete-item restow-item)
+                (display-list lst basename)))))))))
 
 (define (main argv)
   ;; branch by argument
@@ -305,9 +330,17 @@
           ((stowm-regex-match #/env/                   (car argv))
            (print (stowm-env-to-string env)))
           ((stowm-regex-match #/en?a?b?l?e?/           (car argv))
-           (action-by-keyword-num env 'enable          (to-i (second argv)) stowed-list))
+           (cond
+            ((stowm-regex-match #/^[0-9]+$/            (second argv))
+             (action-by-keyword-num  env 'enable       (to-i (second argv)) stowed-list))
+            (else
+             (action-by-keyword-name env 'enable       (second argv) stowed-list))))
           ((stowm-regex-match #/di?s?a?b?l?e?/         (car argv))
-           (action-by-keyword-num env 'disable         (to-i (second argv)) stowed-list))
+           (cond
+            ((stowm-regex-match #/^[0-9]+$/            (second argv))
+             (action-by-keyword-num  env 'disable      (to-i (second argv)) stowed-list))
+            (else
+             (action-by-keyword-name env 'disable      (second argv) stowed-list))))
           ((is-valid-url?                              (car argv))
            (action-by-url env (car argv)))
           ((stowm-regex-match #/^li?s??t?$/            (car argv))

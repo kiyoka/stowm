@@ -18,7 +18,7 @@
 ;; sym are ( i or s or p )
 ;; return: index number, #f is not found
 (define (resolve-program-number proj sym tree)
-  (let1 lst (assv-ref #?=proj #?=tree)
+  (let1 lst (assv-ref proj tree)
     (cond
      (lst
       (let1 filtered
@@ -29,8 +29,8 @@
                      (eq? (fourth x) sym))
                  (fifth x)
                  #f))
-           #?=lst)
-        (if (< 0 (length #?=filtered))
+           lst)
+        (if (< 0 (length filtered))
             ;; found
             (car filtered)
             ;; not found
