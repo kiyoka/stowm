@@ -51,9 +51,13 @@ task :url do
 end
 
 task :e do
-  sh "./bin/stowm e 19"
+  sh "./bin/stowm e 15"
 end
 
 task :d do
-  sh "./bin/stowm d 19"
+  sh "./bin/stowm d 15"
+end
+
+task :r do
+  sh "./bin/stowm r 15"
 end

@@ -256,6 +256,36 @@
               (exit 1))))))))
 
   
+(define (rebuild-num env number stowed-list)
+  (let1 found
+      (filter
+       (lambda (x)
+         (= number (fifth x)))
+       stowed-list)
+    (if (null? found)
+        (begin
+          (STDERR.printf "Error: selected number [%d] was not found...\n" number)
+          (exit 1))
+        (let* ([dirname (caar found)]
+               [basename (car (stowm-split-filename dirname))]
+               [specfile-dir
+                (+ (home-repos env) "/" dirname)]
+               [specfile-path
+                (+ specfile-dir "/" dirname ".yml")]
+               [makefile-dir
+                (+ (temp env) "/" dirname)])
+          
+          ;; load exist specfile
+          (let1 spec-obj
+              (cond
+               ((File.exist? specfile-path)
+                (load-specfile specfile-path))
+               (else
+                (STDERR.printf "Error : not exist specfile [%s].")
+                (exit 1)))
+            (build-package env spec-obj makefile-dir))))))
+
+
 (define (action-by-keyword-num env keyword number stowed-list)
 
   (let* ([delete-action (eqv? 'disable keyword)]
@@ -327,20 +357,22 @@
          0)
         (else
          (cond
-          ((stowm-regex-match #/^env/                   (car argv))
+          ((stowm-regex-match #/^env/                  (car argv))
            (print (stowm-env-to-string env)))
-          ((stowm-regex-match #/^en?a?b?l?e?/           (car argv))
+          ((stowm-regex-match #/^en?a?b?l?e?/          (car argv))
            (cond
             ((stowm-regex-match #/^[0-9]+$/            (second argv))
              (action-by-keyword-num  env 'enable       (to-i (second argv)) stowed-list))
             (else
              (action-by-keyword-name env 'enable       (second argv) stowed-list))))
-          ((stowm-regex-match #/^di?s?a?b?l?e?/         (car argv))
+          ((stowm-regex-match #/^di?s?a?b?l?e?/        (car argv))
            (cond
             ((stowm-regex-match #/^[0-9]+$/            (second argv))
              (action-by-keyword-num  env 'disable      (to-i (second argv)) stowed-list))
             (else
              (action-by-keyword-name env 'disable      (second argv) stowed-list))))
+          ((stowm-regex-match #/^re?b?u?i?l?d?/        (car argv))
+           (rebuild-num  env                           (to-i (second argv)) stowed-list))
           ((is-valid-url?                              (car argv))
            (action-by-url env (car argv)))
           ((stowm-regex-match #/^li?s??t?$/            (car argv))
