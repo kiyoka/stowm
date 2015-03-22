@@ -327,15 +327,15 @@
          0)
         (else
          (cond
-          ((stowm-regex-match #/env/                   (car argv))
+          ((stowm-regex-match #/^env/                   (car argv))
            (print (stowm-env-to-string env)))
-          ((stowm-regex-match #/en?a?b?l?e?/           (car argv))
+          ((stowm-regex-match #/^en?a?b?l?e?/           (car argv))
            (cond
             ((stowm-regex-match #/^[0-9]+$/            (second argv))
              (action-by-keyword-num  env 'enable       (to-i (second argv)) stowed-list))
             (else
              (action-by-keyword-name env 'enable       (second argv) stowed-list))))
-          ((stowm-regex-match #/di?s?a?b?l?e?/         (car argv))
+          ((stowm-regex-match #/^di?s?a?b?l?e?/         (car argv))
            (cond
             ((stowm-regex-match #/^[0-9]+$/            (second argv))
              (action-by-keyword-num  env 'disable      (to-i (second argv)) stowed-list))
