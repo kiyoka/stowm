@@ -18,7 +18,7 @@
             ("fetch" . ,(if fetchable
                             (sprintf "wget %s -O %s" url (filename parsed))
                             #f))
-            ("configure" . ,(sprintf "configure --prefix=%s/%s"
+            ("configure" . ,(sprintf "bash configure --prefix=%s/%s"
                                      stow-home
                                      (package parsed)))
             ("make" . "make")
