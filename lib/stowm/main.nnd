@@ -14,7 +14,7 @@
   (print "  4. stowm disable   [num]             ... disable installed program. (stow -D)")
   (print "     stowm disable   [proj]            ... disalbe installed program by name. (stow -D)")
   (print "     stowm rebuild   [num]             ... rebuild program. (create Makefile.tmp again)")
-  (print "  5 stowm env                         ... display stowm environment.")
+  (print "  5 stowm env                          ... display stowm environment.")
   (print ""))
 
 
