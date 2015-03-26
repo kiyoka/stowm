@@ -1,9 +1,0 @@
-;;-*- mode: scheme; syntax: scheme -*-;;
-(define-stowspec '(
- (conf . "")
- (make . "make")
- (install . "make install")
- (arc . "chibi-scheme-0.4.tgz")
- (url)
- (projname . "chibi-scheme-0.4")
-))

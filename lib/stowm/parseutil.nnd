@@ -1,0 +1,121 @@
+;; #-*- mode: nendo; syntax: scheme -*-;;
+;; Some parser library functions
+
+(use srfi-9)
+(require "uri")
+
+(define stowm-ext-list '(
+                         ("tar[.]gz"    . gz)
+                         ("tgz"         . gz)
+                         ("tar[.]bz2"   . bz2)
+                         ("tar[.]xz"    . xz)
+                         ("tar[.][zZ]"  . z)))
+
+(define stowm-scheme-list '(http https ftp))
+
+(define stowm-rx-project-name "([a-zA-Z][a-zA-Z0-9]+)")
+(define stowm-rx-version      "(.+)")
+(define stowm-rx-ext          (+ "(" (string-join
+                                      (map car stowm-ext-list)
+                                      "|") ")"))
+(define (stowm-split-filename filename)
+  ;; detect ext
+  (let1 filename-and-ext
+      (cond ((stowm-regex-match (+ "(.+)[.]" stowm-rx-ext "$") filename)
+             => (lambda (x)
+                  (cons (second x)
+                        (third x))))
+            (else
+             (cons filename #f)))
+    (let ([filename (car filename-and-ext)]
+          [ext (cdr filename-and-ext)])
+      (cond
+       ((stowm-regex-match (+ "^" stowm-rx-project-name "[-]" stowm-rx-version "$") filename)
+        => (lambda (x)
+             (list (second x) (third x) ext)))
+       ((stowm-regex-match (+ "^" stowm-rx-project-name "$") filename)
+        => (lambda (x)
+             (list (second x) #f ext)))
+       (else
+        '(#f #f #f))))))
+
+(define (stowm-split-path path)
+  (let1 lst (to-list (File.split path))
+    (let ([dirname  (first  lst)]
+          [filename (second lst)])
+      (list dirname filename))))
+
+(define (stowm-get-ext-type ext-string)
+  (let1 lst (filter-map
+             (lambda (entry)
+               (if (stowm-regex-match (car entry) ext-string)
+                   (cdr entry)
+                   #f))
+             stowm-ext-list)
+    (if (< 0 (length lst))
+        (first lst)
+        #f)))
+
+(define (stowm-get-scheme-type scheme-string)
+  (if scheme-string
+      (let1 sym (string->symbol scheme-string)
+        (if (memq sym stowm-scheme-list)
+            sym
+            'unknown))
+      'empty))
+
+
+(define-record-type <parsed>
+  (parsed scheme scheme-type host port path dir filename proj ver package ext arc-type)
+  parsed?
+  (scheme scheme)
+  (scheme-type scheme-type)
+  (host host)
+  (port port)
+  (path path)
+  (dir dir)
+  (filename filename)
+  (proj proj)
+  (ver ver)
+  (package package)
+  (ext ext)
+  (arc-type arc-type))
+
+;; This parser can handle like:
+;;   *.tar.gz
+;;   *.tar.bz2
+;;   *.tar.xz
+;;   http://hostname/xxx/yyy/*.tar.gz
+;;
+;; return: <parsed> record
+(define (stowm-parse-url url-string)
+  (let1 url (URI.parse url-string)
+    (let1 lst (stowm-split-path url.path)
+      (let1 fields (stowm-split-filename (second lst))
+        (parsed
+         url.scheme      ;; => "http"
+         (stowm-get-scheme-type url.scheme) ;; => 'http
+         url.host        ;; => "www.example.com"
+         url.port        ;; => 80
+         url.path        ;; => "/xxx/yyy/aaaa-1.2.3.tar.gz"
+         (first lst)     ;; => "/xxx/yyy"
+         (second lst)    ;; => "aaaa-1.2.3.tar.gz"
+         (or (first  fields) "") ;; => "aaaa"
+         (or (second fields) "");; => "1.2.3"
+         (+ (or (first fields) "")
+            "-"
+            (or (second fields) "")) ;; => "aaaa-1.2.3"
+         (or (third  fields) "");; => "tar.gz"
+         (stowm-get-ext-type (or (third  fields) ""))
+         )))))
+
+(define (is-valid-url? url-string)
+  (let1 parsed (stowm-parse-url url-string)
+    (if (arc-type parsed)
+        (if (eq? 'unknown (scheme-type parsed))
+            #f
+            (if (< 0 (. (ver parsed) size))
+                #t
+                #f))
+        #f)))
+  

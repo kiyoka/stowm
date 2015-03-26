@@ -1,0 +1,39 @@
+;; #-*- mode: nendo; syntax: scheme -*-;;
+;; Basic utility library functions
+(require "digest/sha1")
+
+;; `regex' is a string or Regexp class.
+;;   returns ( $0-string  $1-string  $2-string  $3-string ... )
+(define (stowm-regex-match regex str)
+  (let1 regex (if (regexp? regex)
+                  regex
+                  (string->regexp regex))
+    (let1 matchdata (rxmatch regex str)
+      (if matchdata
+          (matchdata.to_a.to_list)
+          #f))))
+
+;; execute shell script specified by string
+(define (stowm-exec-sh script . disp)
+  (let* ((digest (Digest::SHA1.hexdigest script))
+         (tmpfile (sprintf "/tmp/stowm_script.%s.sh" digest)))
+    (with-open
+     tmpfile
+     (lambda (f)
+       (f.puts script))
+     "w")
+    (if (car disp) (printf "---BEGIN---(%s)\n" tmpfile))
+    (.system (+ "bash " tmpfile))
+    (if (car disp) (print "---END---"))
+    (File.delete tmpfile)
+    ))
+
+;; list directory without "." and  ".." file.
+(define (stowm-get-dir-entries path)
+  (filter
+   (lambda (x)
+     (not (or (x.match "[/]?[.]$")
+              (x.match "[/]?[.][.]$")
+              (x.match "^[.]"))))
+   (to-list (Dir.entries path))))
+

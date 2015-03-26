@@ -1,0 +1,8 @@
+---
+fetch: wget http://prdownloads.sourceforge.net/gauche/Gauche-0.9.4.tgz -O Gauche-0.9.4.tgz
+configure: bash configure --prefix=/usr/local/stow/Gauche-0.9.4
+make: make
+install: make install
+url: http://prdownloads.sourceforge.net/gauche/Gauche-0.9.4.tgz
+filename: Gauche-0.9.4.tgz
+projname: Gauche-0.9.4

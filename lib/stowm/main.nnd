@@ -1,0 +1,396 @@
+;; #-*- mode: nendo; syntax: scheme -*-;;
+;; main program of stowm
+
+(require "fileutils")
+
+(define (display-help)
+  (print "")
+  (print "Usage: ")
+  (print "  1. stowm           URL of tar.gz     ... fetch, generate specfile, build, install program.")
+  (print "     stowm           xxx.tar.gz        ...        generate specfile, build, install program.")
+  (print "  2. stowm list      [proj]            ... display installed program list.")
+  (print "  3. stowm enable    [num]             ... enable  installed program. (stow -R)")
+  (print "     stowm enable    [proj]            ... enable  installed program by name. (stow -D & stow -R)")
+  (print "  4. stowm disable   [num]             ... disable installed program. (stow -D)")
+  (print "     stowm disable   [proj]            ... disalbe installed program by name. (stow -D)")
+  (print "     stowm rebuild   [num]             ... rebuild program. (create Makefile.tmp again)")
+  (print "  5 stowm env                          ... display stowm environment.")
+  (print ""))
+
+
+(define (pickup-package path)
+  (cond
+   ((stowm-regex-match "/stow/([^/]+)" path)
+    => second)
+   (else
+    #f)))
+
+;; return:
+;;   ( (package1 . symlink-file1) (package2 . symlink-file2) ... )
+(define (get-installed-alist local stow-home)
+  (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
+    (stowm-exec-sh script #f)
+    (with-open "/tmp/stowm.cache"
+               (lambda (f)
+                 (let* ((froms
+                         (map
+                          (lambda (line)
+                            (line.chomp))
+                          (f.readlines.to_list)))
+                        (link-alist
+                         (filter-map
+                          (lambda (fn)
+                            (let1 link (pickup-package (File.readlink fn))
+                              (and link
+                                   (cons link fn))))
+                          froms)))
+                   link-alist)))))
+
+;; return:
+;; (
+;;   ;; (package-name installed? stowed? exist in repos?)
+;;   (package1 i s p 0)
+;;   (package2 #f #f #f 0)
+;;    .
+;;    .
+;; )
+(define (get-stowed-list home-repos stow-home link-alist)
+  (let* ((projs       (stowm-get-dir-entries home-repos))
+         (projs-hash  (apply hash-table eq?
+                             (map (lambda (x) (cons x #t))
+                                  projs)))
+         (stowed      (stowm-get-dir-entries stow-home))
+         (stowed-hash (apply hash-table eq?
+                             (map (lambda (x) (cons x #t))
+                                  stowed)))
+         (all         (sort (delete-duplicates (append projs stowed))))
+         (installed-hash (alist->hash-table link-alist)))
+    (map
+     (lambda (x cnt)
+       (cons x ;; package-name like "ruby-2.1.3"
+             (list
+              (if (hash-table-exist? stowed-hash x)
+                  (if (hash-table-exist? installed-hash x) 'e false) ;; enabled?
+                  false)
+              (if (hash-table-exist? stowed-hash x) 'i false)        ;; installed to stow directory?
+              (if (hash-table-exist? projs-hash  x) 's false)        ;; exist specfile?
+              cnt)))
+     all
+     (range (length all)))))
+
+;; rebuild ~/.stowm.db
+(define (save-installed-db env)
+  (let* ([link-alist  (get-installed-alist (local env) (stow-home env))]
+         [stowed-list (get-stowed-list (home-repos env) (stow-home env) link-alist]])
+    (printf "Info: rebuild [%s]\n" (db-path env))
+    (with-open (db-path env)
+               (lambda (f)
+                 (pretty-print stowed-list f))
+               "w"))
+  0)
+
+;; rebuild latest installed db info.
+(define (rebuild-installed-db env)
+  (when (or
+         (not (File.exist? (db-path env)))
+         (let ([stow-home-fs (File::Stat.new (stow-home env))]
+               [db-fs        (File::Stat.new (db-path env))])
+           (<
+            (db-fs.mtime.to_i)
+            (stow-home-fs.mtime.to_i)))
+         (let ((local-bin-fs (File::Stat.new (bin     env))]
+               [db-fs        (File::Stat.new (db-path env))])
+           (<
+            (db-fs.mtime.to_i)
+            (local-bin-fs.mtime.to_i))))
+    (save-installed-db env))
+  (with-open (db-path env)
+             (lambda (f)
+               (read f))))
+
+
+
+(define (display-list stowed-list keyword)
+  (define (ox bool-val)
+    (if bool-val "O" "-"))
+  (define _format_h "        %-35s %11s %11s\n")
+  (define _format_d "   %3d) %-35s %11s %11s\n")
+
+  (let1 lst
+      (if keyword
+          (filter
+           (lambda (x)
+             (stowm-regex-match keyword (car x)))
+           (stowed-list-to-tree stowed-list))
+          (stowed-list-to-tree stowed-list))
+  
+    (print
+     (apply +
+            (cons
+             (sprintf _format_h "       <name>" "<enabled>" "<installed>")
+             (map
+              (lambda (tree)
+                (apply +
+                       (cons
+                        (sprintf " %s \n" (car tree))
+                        (map
+                         (lambda (x)
+                           (sprintf _format_d
+                                    (fifth x)
+                                    (+ " " (first x))
+                                    (ox (second x))
+                                    (ox (third x))))
+                         (cdr tree)))))
+              lst))))))
+
+(define (stowm-stderr-tee str)
+  (STDERR.printf "Info: %s\n" str)
+  str)
+
+
+(define (stowm-restow env delete-item restow-item)
+  (let1 script (string-join
+                (list
+                 (+ "cd " (stow-home env))
+                 (if (null? delete-item)
+                     ""
+                     (stowm-stderr-tee (sprintf "%s -D %s" (stow-program env) (car delete-item))))
+                 (if (null? restow-item)
+                     ""
+                     (stowm-stderr-tee (sprintf "%s -R %s" (stow-program env) (car restow-item))))
+                 "")
+                "\n")
+    (stowm-exec-sh script #f)
+    (save-installed-db env)
+    (with-open (db-path env)
+               (lambda (f)
+                 (read f)))))
+
+
+;; build the package
+(define (build-package env spec-obj makefile-dir)
+  (let* (
+         [makefile-path
+          (+ makefile-dir "/Makefile.tmp")]
+         [makefile-str
+          (create-makefile spec-obj (home-repos env))])
+
+    ;; save Makefile.tmp and build
+    (with-open
+     makefile-path
+     (lambda (f)
+       (f.printf "%s" makefile-str)
+       (STDERR.printf "Info : created Makefile [%s] \n" makefile-path))
+     "w")
+    
+    (let1 script (+
+                  (sprintf "make -C %s -f Makefile.tmp clean\n" makefile-dir)
+                  (sprintf "make -C %s -f Makefile.tmp\n"       makefile-dir))
+      (stowm-exec-sh script))))
+
+
+;; action by url
+(define (action-by-url env url)
+  (let* ([parsed (stowm-parse-url url)]
+         [specfile-str
+          (create-specfile (stow-home env) url)]
+         [specfile-dir
+          (+ (home-repos env) "/" (package parsed))]
+         [specfile-path
+          (+ specfile-dir "/" (package parsed) ".yml")]
+         [makefile-dir
+          (+ (temp env) "/" (package parsed))])
+    
+    ;; create directory
+    (when (not (File.exist? specfile-dir))
+      (FileUtils.mkdir_p specfile-dir))
+
+    (when (not (File.exist? makefile-dir))
+      (FileUtils.mkdir_p makefile-dir))
+
+    ;; save specfile
+    (if (File.exist? specfile-path)
+        (STDERR.printf "Info : alreay exist [%s] file. didn't touch.\n" specfile-path)
+        (with-open
+         specfile-path
+         (lambda (f)
+           (f.printf "%s" specfile-str)
+           (STDERR.printf "Info : created spec [%s] \n" specfile-path))
+         "w"))
+
+    ;; load exist specfile
+    (let1 spec-obj
+        (cond
+         ((File.exist? specfile-path)
+          (load-specfile specfile-path))
+         (else
+          (STDERR.printf "Error : not exist specfile [%s].")
+          (exit 1)))
+      (build-package env spec-obj makefile-dir))))
+
+
+
+(define (action-by-keyword-name env keyword name stowed-list)
+  ;; resolve program number by name
+  (let1 tree (stowed-list-to-tree stowed-list)
+    (cond
+     ((eqv? 'enable keyword)
+      (let1 num
+          (resolve-program-number name 'e tree)
+        (if num
+            ;; restow already enabled one
+            (action-by-keyword-num env 'enable num stowed-list)
+            (begin
+              (STDERR.printf "Error: package [%s] was not stowed yet.\n" name)
+              (display-help)
+              (exit 1)))))
+     ((eqv? 'disable keyword)
+      (let1 num
+          (resolve-program-number name 'e tree)
+        (if num
+            ;; disable already enabled one
+            (action-by-keyword-num env 'disable num stowed-list)
+            (begin
+              (STDERR.printf "Error: selected package [%s] was not enabled.\n" name)
+              (display-help)
+              (exit 1))))))))
+
+  
+(define (rebuild-num env number stowed-list)
+  (let1 found
+      (filter
+       (lambda (x)
+         (= number (fifth x)))
+       stowed-list)
+    (if (null? found)
+        (begin
+          (STDERR.printf "Error: selected number [%d] was not found...\n" number)
+          (exit 1))
+        (let* ([dirname (caar found)]
+               [basename (car (stowm-split-filename dirname))]
+               [specfile-dir
+                (+ (home-repos env) "/" dirname)]
+               [specfile-path
+                (+ specfile-dir "/" dirname ".yml")]
+               [makefile-dir
+                (+ (temp env) "/" dirname)])
+          
+          ;; load exist specfile
+          (let1 spec-obj
+              (cond
+               ((File.exist? specfile-path)
+                (load-specfile specfile-path))
+               (else
+                (STDERR.printf "Error : not exist specfile [%s].")
+                (exit 1)))
+            (build-package env spec-obj makefile-dir))))))
+
+
+(define (action-by-keyword-num env keyword number stowed-list)
+
+  (let* ([delete-action (eqv? 'disable keyword)]
+         ;; ----------
+         ;; search the number in list
+         ;; ----------
+         (found
+          (filter
+           (lambda (x)
+             (= number (fifth x)))
+           stowed-list)))
+    (if (null? found)
+        (begin
+          (STDERR.printf "Error: selected number [%d] was not found...\n" number)
+          (exit 1))
+        (let* ([dirname (caar found)]
+               [basename (car (stowm-split-filename dirname))]
+               [tree (stowed-list-to-tree stowed-list)]
+               [selection (assv-ref basename tree)])
+          (let ((delete-item
+                 (filter-map
+                  (lambda (x)
+                    (if (= 'e (second x)) ;; enabled?
+                        (car x)
+                        nil))
+                  selection))
+                (restow-item
+                 (filter-map
+                  (lambda (x)
+                    (if (and (= 'i (third x)) ;; installed?
+                             (= number (fifth x)))
+                        (car x)
+                        nil))
+                  selection)))
+            (cond
+             ((null? restow-item)
+              (STDERR.printf "Error: selected number [%d] was not installed yet. \n" number)
+              (exit 1))
+             (delete-action
+              (let1 lst (stowm-restow env delete-item '())
+                (display-list lst basename)))
+             ((equal? delete-item restow-item)
+              (STDERR.printf "Info: restow [%s].\n" (car restow-item))
+              (let1 lst (stowm-restow env delete-item restow-item)
+                (display-list lst basename)))
+             (else
+              (let1 lst (stowm-restow env delete-item restow-item)
+                (display-list lst basename)))))))))
+
+(define (main argv)
+  ;; branch by argument
+  (let1 env (stowm-get-default-env)
+
+    ;; load dotfiles
+    (if (File.exist? (inifile-path env))
+        (load (inifile-path env)))
+    
+    ;; home-repos exist check
+    (if (not (Dir.exist? (home-repos env)))
+        (begin
+          (STDERR.printf "Error : repos dir [%s] nessesary to use stowm.\n" (home-repos env))
+          (exit 1)))
+
+    (let1 stowed-list (rebuild-installed-db env)
+
+      (case (length argv)
+        ((0)
+         (display-help)
+         0)
+        (else
+         (cond
+          ((stowm-regex-match #/^env/                  (car argv))
+           (print (stowm-env-to-string env)))
+          ((stowm-regex-match #/^en?a?b?l?e?/          (car argv))
+           (cond
+            ((stowm-regex-match #/^[0-9]+$/            (second argv))
+             (action-by-keyword-num  env 'enable       (to-i (second argv)) stowed-list))
+            (else
+             (action-by-keyword-name env 'enable       (second argv) stowed-list))))
+          ((stowm-regex-match #/^di?s?a?b?l?e?/        (car argv))
+           (cond
+            ((stowm-regex-match #/^[0-9]+$/            (second argv))
+             (action-by-keyword-num  env 'disable      (to-i (second argv)) stowed-list))
+            (else
+             (action-by-keyword-name env 'disable      (second argv) stowed-list))))
+          ((stowm-regex-match #/^re?b?u?i?l?d?/        (car argv))
+           (rebuild-num  env                           (to-i (second argv)) stowed-list))
+          ((is-valid-url?                              (car argv))
+           (action-by-url env (car argv)))
+          ((stowm-regex-match #/^li?s??t?$/            (car argv))
+           (cond
+            ((< 1 (length argv))
+             (display-list stowed-list (second argv)))
+            (else
+             (display-list stowed-list #f))))
+          (else
+           (display-help)
+           0)))))))
+
+;; ----------------------------------------
+;; utility for user's "specfile" file.
+;; ----------------------------------------
+(define stowspec nil)
+(define (define-stowspec alist)
+  (set! stowspec alist))
+(define uname 
+  (let1 f (IO.popen "uname" "r+")
+    f.readline.chop))
