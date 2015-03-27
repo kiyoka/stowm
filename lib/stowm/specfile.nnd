@@ -38,6 +38,25 @@
      (parse-yaml f))))
 
 
+;; return
+;;   "tar zxf aaaa-1.2.3.tar.gz"
+;; or
+;;   "bzcat aaaa-1.2.3.tar.bz2 | tar xf -"
+(define (create-extract-tarball-command url)
+  (let* ([parsed (stowm-parse-url url)]
+         [_filename (filename parsed)])
+    (cond
+     ((or (eq? 'gz (arc-type parsed))
+          (eq? 'z (arc-type parsed)))
+      (sprintf "tar zxf %s" _filename))
+     ((eq? 'bz2 (arc-type parsed))
+      (sprintf "bzcat %s | tar xf -" _filename))
+     ((eq? 'xz (arc-type parsed))
+      (sprintf "xzcat %s | tar xf -" _filename))
+     (else
+      (sprintf "echo \"Error: unsupported archive format. (%s) ; exit 1 ; \"" _filename)))))
+
+  
 ;; spec object to Makefile string
 ;; spec-obj : loaded data of specfile.yml
 (define (create-makefile spec-obj home-repos)
@@ -52,10 +71,10 @@
                     (assv-ref "configure" spec-obj)
                     (assv-ref "make" spec-obj)
                     (assv-ref "install" spec-obj))
-           (sprintf "%s/configure : %s\n	tar zxf %s\n	touch %s/configure"
+           (sprintf "%s/configure : %s\n	%s\n	touch %s/configure"
                     projname
                     filename
-                    filename
+                    (create-extract-tarball-command (assv-ref "url" spec-obj))
                     projname)
            (if fetch
                (sprintf "%s :\n	%s"

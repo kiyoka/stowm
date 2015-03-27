@@ -1,0 +1,8 @@
+---
+fetch: wget https://www.kernel.org/pub/software/scm/git/git-2.3.4.tar.xz -O git-2.3.4.tar.xz
+configure: bash configure --prefix=/usr/local/stow/git-2.3.4
+make: make
+install: make install
+url: https://www.kernel.org/pub/software/scm/git/git-2.3.4.tar.xz
+filename: git-2.3.4.tar.xz
+projname: git-2.3.4

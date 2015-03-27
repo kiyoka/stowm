@@ -58,6 +58,40 @@ projname: ruby-2.2.0
         "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.gz"))
 
 ;;-------------------------------------------------------------------
+(test-section "extract command")
+
+(test* "extract command (1)"
+       "tar zxf ruby-2.2.0.tar.gz"
+       (create-extract-tarball-command
+        "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.gz"
+        ))
+
+(test* "extract command (2)"
+       "tar zxf ruby-2.2.0.tar.Z"
+       (create-extract-tarball-command
+        "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.Z"
+        ))
+
+(test* "extract command (3)"
+       "bzcat ruby-2.2.0.tar.bz2 | tar xf -"
+       (create-extract-tarball-command
+        "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.bz2"
+        ))
+
+(test* "extract command (4)"
+       "xzcat ruby-2.2.0.tar.xz | tar xf -"
+       (create-extract-tarball-command
+        "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.xz"
+        ))
+
+(test* "extract command (5)"
+       "echo \"Error: unsupported archive format. (ruby-2.2.0.tar.unknown) ; exit 1 ; \""
+       (create-extract-tarball-command
+        "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.unknown"
+        ))
+
+
+;;-------------------------------------------------------------------
 (test-section "makefile")
 
 (test* "spec-to-makefile (1)"
@@ -112,6 +146,31 @@ clean:
         "/home/bbbb/stowm" ;; home-repos
         ))
 
-       
+(test* "spec-to-makefile (3)"
+"all: ruby-2.2.0/configure
+\tcd ./ruby-2.2.0 && bash configure --prefix=/usr/local/stow/ruby-2.2.0 && make && make install
+
+ruby-2.2.0/configure : ruby-2.2.0.tar.xz
+\txzcat ruby-2.2.0.tar.xz | tar xf -
+\ttouch ruby-2.2.0/configure
+
+ruby-2.2.0.tar.xz :
+\twget http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.xz -O ruby-2.2.0.tar.xz
+
+clean:
+\t/bin/rm -rf ./ruby-2.2.0
+"
+       (create-makefile
+        '(
+          ("fetch" .  "wget http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.xz -O ruby-2.2.0.tar.xz")
+          ("configure" . "bash configure --prefix=/usr/local/stow/ruby-2.2.0")
+          ("make" . "make")
+          ("install" . "make install")
+          ("url" . "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.xz")
+          ("filename" . "ruby-2.2.0.tar.xz")
+          ("projname" . "ruby-2.2.0"))
+        "/home/bbbb/stowm" ;; home-repos
+        ))
+
 ;;===================================================================
 (test-end)
