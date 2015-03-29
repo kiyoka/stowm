@@ -1,5 +1,5 @@
 ---
-fetch: wget http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.1.tar.gz -O ruby-2.2.1.tar.gz
+fetch: bash ~/stowm/ruby-2.2.1/fetch.sh
 configure: configure --prefix=/usr/local/stow/ruby-2.2.1
 make: make
 install: make install
