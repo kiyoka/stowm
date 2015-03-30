@@ -46,8 +46,12 @@ task :list do
   sh "./bin/stowm list git"
 end
 
-task :url do
+task :url1 do
   sh "./bin/stowm https://www.kernel.org/pub/software/scm/git/git-2.3.4.tar.xz"
+end
+
+task :url2 do
+  sh "./bin/stowm ruby-1.7.19-jruby.tar.gz"
 end
 
 task :e do

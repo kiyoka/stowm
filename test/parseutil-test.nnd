@@ -336,6 +336,16 @@
           (ext  parsed)
           (arc-type  parsed))))
 
+;; jruby
+(test* "parse-url (10)" '("." "ruby-1.7.19-jruby.tar.gz" "ruby" "1.7.19-jruby" "tar.gz" gz)
+       (let1 parsed (stowm-parse-url "ruby-1.7.19-jruby.tar.gz")
+         (list
+          (dir parsed)
+          (filename parsed)
+          (proj parsed)
+          (ver  parsed)
+          (ext  parsed)
+          (arc-type  parsed))))
 
 (test* "judgement (1)"
        #t
