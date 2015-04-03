@@ -24,7 +24,7 @@ task :test do
   sh "nendo -I ./lib  ./test/env-test.nnd                   >> test.log"
   sh "nendo -I ./lib  ./test/listutil-test.nnd              >> test.log"
   sh "nendo -I ./lib  ./test/specfile-test.nnd              >> test.log"
-  sh "cat test.log"
+  sh "nendo -I ./lib  ./test/makefile-test.nnd              >> test.log"
   sh "cat test.record"
   sh "grep ' 0 failed, ' test.record  > /dev/null"
 end
