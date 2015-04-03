@@ -1,6 +1,6 @@
 ---
 fetch: wget http://download.redis.io/releases/redis-3.0.0.tar.gz -O redis-3.0.0.tar.gz
-configure: true
+configure: 
 make: make && make test
 install: make PREFIX=/usr/local/stow/redis-3.0.0 install
 url: http://download.redis.io/releases/redis-3.0.0.tar.gz

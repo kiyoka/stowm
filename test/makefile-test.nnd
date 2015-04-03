@@ -37,15 +37,50 @@
 
 ;;===================================================================
 ;;-------------------------------------------------------------------
-(test-section "makefile")
+(test-section "cmdline")
 (use stowm.util)
 (use stowm.parseutil)
 (use stowm.specfile)
 (test-module 'specfile)
 
-;;-------------------------------------------------------------------
+(test* "cmdline for makefile (1)"
+       "cd ./ruby-2.1.3 && bash configure --prefix=/usr/local/stow/ruby-2.1.3 && make && make install"
+       (create-build-cmdline
+        "cd ./ruby-2.1.3"
+        "bash configure --prefix=/usr/local/stow/ruby-2.1.3"
+        "make"
+        "make install"))
 
-(test* "spec-to-makefile (1)"
+(test* "cmdline for makefile (2)"
+       "cd ./ruby-2.1.3"
+       (create-build-cmdline
+        "cd ./ruby-2.1.3"
+        "   "
+        "  "
+        " "))
+
+(test* "cmdline for makefile (3)"
+       "cd ./ruby-2.1.3"
+       (create-build-cmdline
+        "cd ./ruby-2.1.3"
+        ""
+        "\t"
+        "\t\t"))
+
+(test* "cmdline for makefile (4)"
+       "cd ./redis-3.0.0 && make && make test && make PREFIX=/usr/local/stow/redis-3.0.0 install"
+       (create-build-cmdline
+        "cd ./redis-3.0.0"
+        ""
+        "make && make test"
+        "make PREFIX=/usr/local/stow/redis-3.0.0 install"))
+
+
+;;-------------------------------------------------------------------
+(test-section "makefile")
+
+;; Ordinary specfile which created from local tar.gz archive
+(test* "spec-to-makefile (local tar.gz)"
 "all: ruby-2.1.3/configure
 \tcd ./ruby-2.1.3 && bash configure --prefix=/usr/local/stow/ruby-2.1.3 && make && make install
 
@@ -71,7 +106,8 @@ clean:
         "/home/aaaa/stowm" ;; home-repos
         ))
 
-(test* "spec-to-makefile (2)"
+;; Ordinary specfile which created from remote download url.
+(test* "spec-to-makefile (remote tar.gz)"
 "all: ruby-2.2.0/configure
 \tcd ./ruby-2.2.0 && bash configure --prefix=/usr/local/stow/ruby-2.2.0 && make && make install
 
@@ -97,7 +133,8 @@ clean:
         "/home/bbbb/stowm" ;; home-repos
         ))
 
-(test* "spec-to-makefile (3)"
+;; Ordinary specfile which created from remote download url.
+(test* "spec-to-makefile (remote tar.xz)"
 "all: ruby-2.2.0/configure
 \tcd ./ruby-2.2.0 && bash configure --prefix=/usr/local/stow/ruby-2.2.0 && make && make install
 
@@ -122,6 +159,35 @@ clean:
           ("projname" . "ruby-2.2.0"))
         "/home/bbbb/stowm" ;; home-repos
         ))
+
+
+;; tar.gz doesn't have configure script.
+(test* "spec-to-makefile (not exist configure)"
+"all: redis-3.0.0/configure
+\tcd ./redis-3.0.0 && make && make test && make PREFIX=/usr/local/stow/redis-3.0.0 install
+
+redis-3.0.0/configure : redis-3.0.0.tar.gz
+\ttar zxf redis-3.0.0.tar.gz
+\ttouch redis-3.0.0/configure
+
+redis-3.0.0.tar.gz :
+\twget http://download.redis.io/releases/redis-3.0.0.tar.gz -O redis-3.0.0.tar.gz
+
+clean:
+\t/bin/rm -rf ./redis-3.0.0
+"
+       (create-makefile
+        '(
+          ("fetch" .  "wget http://download.redis.io/releases/redis-3.0.0.tar.gz -O redis-3.0.0.tar.gz")
+          ("configure" . "")
+          ("make" . "make && make test")
+          ("install" . "make PREFIX=/usr/local/stow/redis-3.0.0 install")
+          ("url" . "http://download.redis.io/releases/redis-3.0.0.tar.gz")
+          ("filename" . "redis-3.0.0.tar.gz")
+          ("projname" . "redis-3.0.0"))
+        "/home/bbbb/stowm" ;; home-repos
+        ))
+
 
 ;;===================================================================
 (test-end)
