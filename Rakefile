@@ -3,7 +3,7 @@
 # Release Engineering
 #   1. rake
 #      to test
-#   2. rake build
+#   2. rake compile && rake build
 #      to generate stowm-x.x.x.gem
 #   3. install stowm-x.x.x.gem to clean environment and test
 #   4. rake release
@@ -27,6 +27,15 @@ task :test do
   sh "nendo -I ./lib  ./test/makefile-test.nnd              >> test.log"
   sh "cat test.record"
   sh "grep ' 0 failed, ' test.record  > /dev/null"
+end
+
+task :compile do
+  sh "nendo -c ./lib/stowm/env.nnd >       ./lib/stowm/env.nndc"
+  sh "nendo -c ./lib/stowm/util.nnd >      ./lib/stowm/util.nndc"
+  sh "nendo -c ./lib/stowm/specfile.nnd >  ./lib/stowm/specfile.nndc"
+  sh "nendo -c ./lib/stowm/parseutil.nnd > ./lib/stowm/parseutil.nndc"
+  sh "nendo -c ./lib/stowm/main.nnd >      ./lib/stowm/main.nndc"
+  sh "nendo -c ./lib/stowm/listutil.nnd >  ./lib/stowm/listutil.nndc"
 end
 
 task :help do

@@ -26,6 +26,12 @@ Gem::Specification.new do |spec|
     "lib/stowm/listutil.nnd",
     "lib/stowm/env.nnd",
     "lib/stowm/util.nnd",
+    "lib/stowm/parseutil.nndc",
+    "lib/stowm/listutil.nndc",
+    "lib/stowm/env.nndc",
+    "lib/stowm/specfile.nndc",
+    "lib/stowm/util.nndc",
+    "lib/stowm/main.nndc",
     "lib/stowm/version.rb",
     "lib/stowm.rb"
   ]

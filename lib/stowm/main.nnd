@@ -335,62 +335,6 @@
               (let1 lst (stowm-restow env delete-item restow-item)
                 (display-list lst basename)))))))))
 
-(define (main argv)
-  ;; branch by argument
-  (let1 env (stowm-get-default-env)
-
-    ;; load dotfiles
-    (if (File.exist? (inifile-path env))
-        (load (inifile-path env)))
-    
-    ;; home-repos exist check
-    (if (not (Dir.exist? (home-repos env)))
-        (begin
-          (STDERR.printf "Error : repos dir [%s] nessesary to use stowm.\n" (home-repos env))
-          (exit 1)))
-
-    (let1 stowed-list (rebuild-installed-db env)
-
-      (case (length argv)
-        ((0)
-         (display-help)
-         0)
-        (else
-         (cond
-          ((stowm-regex-match #/^env/                  (car argv))
-           (print (stowm-env-to-string env)))
-          ((stowm-regex-match #/^ena?b?l?e?/           (car argv))
-           (cond
-            ((stowm-regex-match #/^[0-9]+$/            (second argv))
-             (action-by-keyword-num  env 'enable       (to-i (second argv)) stowed-list))
-            (else
-             (action-by-keyword-name env 'enable       (second argv) stowed-list))))
-          ((stowm-regex-match #/^dis?a?b?l?e?/         (car argv))
-           (cond
-            ((stowm-regex-match #/^[0-9]+$/            (second argv))
-             (action-by-keyword-num  env 'disable      (to-i (second argv)) stowed-list))
-            (else
-             (action-by-keyword-name env 'disable      (second argv) stowed-list))))
-          ((stowm-regex-match #/^reb?u?i?l?d?/         (car argv))
-           (rebuild-num  env                           (to-i (second argv)) stowed-list))
-          ((is-valid-url?                              (car argv))
-           (action-by-url env (car argv)))
-          ((stowm-regex-match #/^li?s??t?$/            (car argv))
-           (cond
-            ((< 1 (length argv))
-             (display-list stowed-list (second argv)))
-            (else
-             (display-list stowed-list #f))))
-          (else
-           (display-help)
-           0)))))))
-
-;; ----------------------------------------
-;; utility for user's "specfile" file.
-;; ----------------------------------------
-(define stowspec nil)
-(define (define-stowspec alist)
-  (set! stowspec alist))
 (define uname 
   (let1 f (IO.popen "uname" "r+")
     f.readline.chop))
