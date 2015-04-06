@@ -7,7 +7,6 @@
 #      to generate stowm-x.x.x.gem
 #   3. install stowm-x.x.x.gem to clean environment and test
 #   4. rake release
-#   5. gem push pkg/stowm-x.x.x.gem
 
 require 'rake'
 require 'bundler/gem_tasks'
