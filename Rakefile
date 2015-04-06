@@ -11,7 +11,6 @@
 
 require 'rake'
 require 'bundler/gem_tasks'
-require 'jeweler2'
 
 task :default => [:test] do
 end
