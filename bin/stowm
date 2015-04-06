@@ -53,6 +53,12 @@ core.evalStr( <<";;END-OF-SCRIPT" )
   ;; branch by argument
   (let1 env (stowm-get-default-env)
 
+    ;; check the stow program
+    (if (not (stow-program env))
+        (begin
+          (STDERR.puts "Error: not found the (stow or xstow) program binary.")
+          (exit 1)))
+
     ;; load dotfiles
     (if (File.exist? (inifile-path env))
         (load (inifile-path env)))
