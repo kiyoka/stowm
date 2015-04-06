@@ -58,7 +58,7 @@
                            (read f)))))
 
 (test* "get-dir-entries (1)" '("stowm" "stowm.rb")
-       (stowm-get-dir-entries "./lib"))
+       (sort (stowm-get-dir-entries "./lib")))
 
 
 
