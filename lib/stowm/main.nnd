@@ -28,7 +28,7 @@
 ;; return:
 ;;   ( (package1 . symlink-file1) (package2 . symlink-file2) ... )
 (define (get-installed-alist local stow-home)
-  (let1 script (sprintf "find %s -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
+  (let1 script (sprintf "find %s -maxdepth 2 -type l | grep -v %s > /tmp/stowm.cache\n" local stow-home)
     (stowm-exec-sh script #f)
     (with-open "/tmp/stowm.cache"
                (lambda (f)
