@@ -1,0 +1,8 @@
+---
+fetch: wget http://ftp.gnu.org/gnu/emacs/emacs-24.5.tar.xz -O emacs-24.5.tar.xz
+configure: bash configure --prefix=/usr/local/stow/emacs-24.5
+make: make
+install: make install
+url: http://ftp.gnu.org/gnu/emacs/emacs-24.5.tar.xz
+filename: emacs-24.5.tar.xz
+projname: emacs-24.5
