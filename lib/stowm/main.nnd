@@ -175,6 +175,10 @@
          [makefile-str
           (create-makefile spec-obj (home-repos env))])
 
+    ;; mkdir Makefile.tmp's base-dir
+    (when (not (File.exist? makefile-dir))
+      (FileUtils.mkdir_p makefile-dir))
+
     ;; save Makefile.tmp and build
     (with-open
      makefile-path
