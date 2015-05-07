@@ -1,0 +1,10 @@
+# force 32bit compile on 64bit platform.
+---
+fetch: wget https://leveldb.googlecode.com/files/leveldb-1.15.0.tar.gz -O leveldb-1.15.0.tar.gz
+configure: bash configure --prefix=/usr/local/stow/leveldb-1.15.0
+make: make CC="gcc -m32" CXX="g++ -m32"
+#make: make
+install: /bin/rm -rf /usr/local/stow/leveldb-1.15.0 ; mkdir -p /usr/local/stow/leveldb-1.15.0/lib ; /bin/cp -r ../leveldb-1.15.0/* /usr/local/stow/leveldb-1.15.0 ; /bin/cp ./libleveldb.a ./*.so* /usr/local/stow/leveldb-1.15.0/lib/
+url: https://leveldb.googlecode.com/files/leveldb-1.15.0.tar.gz
+filename: leveldb-1.15.0.tar.gz
+projname: leveldb-1.15.0
